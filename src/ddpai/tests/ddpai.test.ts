@@ -1,4 +1,4 @@
-import * as DDPAI from '../ddpai.js';
+import * as DDPAI from '../ddpai';
 import * as DDPAI_T from '../types/ddpai'
 import { expect, test } from 'vitest'
 
