@@ -14,6 +14,9 @@ interface WayPointIntf{
     hasSpeed():boolean
     hasHeading():boolean
     hasHdop():boolean
+
+    toXY():[number, number]
+    distanceTo(other: WayPointIntf):number
 }
 
 export{

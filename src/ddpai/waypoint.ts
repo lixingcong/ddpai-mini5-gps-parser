@@ -37,7 +37,7 @@ class WayPoint implements WayPointIntf {
 
     // 与另一点的地球距离(WGS84)，返回数字（单位：米）
     // 参数other为另一WayPoint，也可为undefined，此时返回0
-    distanceTo(other: WayPoint)
+    distanceTo(other: WayPointIntf):number
     {
         if(undefined == other || !this.hasGeometry() || !other.hasGeometry())
             return 0

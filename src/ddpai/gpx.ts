@@ -129,11 +129,11 @@ class Wpt implements XmlIntf
 
 class Rte implements XmlIntf
 {
-    name:string
+    name:string|undefined
     description:string|undefined
     rtepts:Rtept[]
 
-    constructor(name:string, rtepts:Rtept[], description:string|undefined)
+    constructor(name:strin|undefined, rtepts:Rtept[], description:string|undefined)
     {
         this.name = name;
         this.description = description;
