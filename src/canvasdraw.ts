@@ -5,7 +5,7 @@ const CanvasPointRadius = 3;
 
 /**
  * @param {HTMLCanvasElement} canvas 画布
- * @param {[TRACK_I.PaintPoint]} paintPoints TRACK_I.paint()返回的结果中的点位数组。
+ * @param {TRACK_I.PaintPoint[]} paintPoints TRACK_I.paint()返回的结果中的点位数组。
  * @param {bool} showEdgePoint 是否绘制起始点、结束点
  * @param {int} width 画布大小
  * @param {int} height 画布大小

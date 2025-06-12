@@ -40,17 +40,38 @@
             <textarea v-model="trackFileHookCode" v-show="trackFileHookCodeEnabled" rows="12" cols="0"></textarea>
         </details>
 
-        <div id="progressBarDiv" style="display: none;">
+        <div v-show="fileProgress>-1.5">
 			<label>处理进度 </label>
-			<progress id="progressBar" value="-1"></progress>
+			<progress ref="progressBar" value="-1"></progress>
 		</div>
-		<div id="exportedTrackList"></div>
-		<div id="infoList"></div>
-		<div id="errorList">
-			<div id="errorListHeader" style="display: none;">
-				错误信息（<label id="errorCount">0</label>条）
-			</div>
-			<div id="errorListBody"></div>
+		<div>
+            <div v-for="dl in trackDownloadLinks" class="btn-spacer">
+                <a :text="dl.text" :download="dl.text" :href="dl.href"></a>,{{ dl.sizeHint }}
+            </div>
+            <div v-show="showPreviewZipButton">
+                <button @click="listAllFiles">预览压缩包</button>
+            </div>
+        </div>
+        <div v-for="p in trackPreviewProps">
+            <TrackPreview
+                :paintResult="p.paintResult"
+                :canvasWidth="p.canvasWidth"
+                :canvasHeight="p.canvasHeight"
+                :filename="p.filename"
+                :fileBlob="p.fileBlob"
+                :keepSameFormat="p.keepSameFormat"
+                :trackPointCount="p.trackPointCount"
+                :trackLineCount="p.trackLineCount"
+                :trackPathCount="p.trackPathCount">
+            </TrackPreview>
+        </div>
+		<div v-show="infoList.show">
+            源数目: {{ g_fileCount }}, 已转换: {{ infoList.converted }}, 无需转换: {{ infoList.same }}<br/>
+            耗时{{ convertedCostTime }}
+        </div>
+		<div id="errorList" v-show="g_errorList.length>0">
+			<div>错误信息（{{g_errorList.length}}条）</div>
+			<div v-for="(e,idx) in g_errorList">{{ idx+1 }}: {{ e }}</div>
 		</div>
         <component is="script" ref="scriptLoader" v-if="renderComponent"></component>
     </div>
@@ -59,7 +80,16 @@
 <script setup lang="ts" name="Converter">
 import "@/views/ddpai.css"
 import HelpTip from "./HelpTip.vue"
-import { nextTick, ref } from "vue"
+import TrackPreview from './TrackPreview.vue'
+import {type Props as TrackPreviewProps }  from '../types/TrackPreview'
+import { nextTick, reactive, ref, watch } from "vue"
+import { type Converted, MyFile } from "@/converter"
+import * as DF from '@/ddpai/date-format'
+import * as TRACK from '@/ddpai/track'
+import * as KML from '@/ddpai/kml'
+import * as GPX from '@/ddpai/gpx'
+import * as UTILS from '@/ddpai/utils'
+import JSZip from 'jszip'
 
 let trackFileHookCode_ = `
 import { TrackFile } from "./track.js";
@@ -89,6 +119,21 @@ let convertSameFormat=ref(false)
 let fileInput = ref()
 let scriptLoader = ref()
 let renderComponent = ref(true)
+let fileProgress = ref(-2)
+let progressBar = ref()
+let infoList = reactive({
+    converted : 0,
+    same: 0,
+    show: false
+})
+let convertedCostTime = ref('')
+let showPreviewZipButton = ref(false)
+let trackPreviewProps:TrackPreviewProps[] = reactive([])
+
+// 来自js版的变量
+let g_errorList:string[] = reactive([])
+let g_fileCount = ref(0)
+let g_files:MyFile[] = []; // MyFile对象
 
 const fileFormatSelected=ref('kml')
 const fileFormatOptions = [
@@ -96,52 +141,296 @@ const fileFormatOptions = [
   { text: '转为GPX', value: 'gpx' },
 ]
 
+interface TrackDownload
+{
+    text:string
+    href:string
+    sizeHint: string
+}
+let trackDownloadLinks:TrackDownload[] = reactive([])
+
 async function onClickedConvert()
 {
-    (window as any).trackFileHook = undefined
-
-    // 强制刷新 https://medium.com/emblatech/ways-to-force-vue-to-re-render-a-component-df866fbacf47
-    renderComponent.value = false
-    await nextTick()
-
-    renderComponent.value = true
-    await nextTick()
-
-    let scriptDOM = scriptLoader.value as HTMLScriptElement
-    const now = Date.now()
-    scriptDOM.text = 'window.trackFileHook=function(){alert("XXX"+"'+now+'");}'
-
-    const waitHookToBeReady = async () => {
-        // https://stackoverflow.com/a/53269990/5271632
-        const t1 = Date.now();
-        while (undefined == (window as any).trackFileHook) {
-            if(Date.now() - t1 > 500){
-                console.log('timeout')
-                return;
-            }
-            await new Promise(resolve => requestAnimationFrame(resolve));
-        }
-    };
-
-    waitHookToBeReady().then(()=>{
-        let f = (window as any).trackFileHook
-        console.log('ok hook', f)
-        if(f)f()
-    })
-
-
     // console.log(text)
 
     const srcFiles = (fileInput.value as HTMLInputElement).files;
     if(!srcFiles || srcFiles.length < 1){
-        // TODO: 输出错误 请至少上传一个文件
+        appendError('请至少上传一个文件')
         return;
     }
 
-    if(trackFileHookCodeEnabled){
+    if(trackFileHookCodeEnabled.value){
+        (window as any).trackFileHook = undefined
 
+        // 强制刷新 https://medium.com/emblatech/ways-to-force-vue-to-re-render-a-component-df866fbacf47
+        renderComponent.value = false
+        await nextTick()
+
+        renderComponent.value = true
+        await nextTick()
+
+        let scriptDOM = scriptLoader.value as HTMLScriptElement
+        scriptDOM.text = trackFileHookCode.value
+
+        const waitHookToBeReady = async () => {
+            // https://stackoverflow.com/a/53269990/5271632
+            const t1 = Date.now();
+            while (undefined == (window as any).trackFileHook) {
+                if(Date.now() - t1 > 500)
+                    return;
+                await new Promise(resolve => requestAnimationFrame(resolve));
+            }
+        };
+
+        waitHookToBeReady().then(()=>{
+            let f = (window as any).trackFileHook
+            if(f){
+                // console.log('hook is loaded')
+                beginToExport(srcFiles)
+            }else{
+                appendError('无效的hook，请检查语法')
+            }
+        })
+    }else{
+        // no hook
+        beginToExport(srcFiles)
     }
 }
+
+function beginToExport(srcFiles:FileList){
+    const costTimestampBegin = DF.now();
+
+    g_fileCount.value = srcFiles.length
+    g_files=[]
+    fileProgress.value = 0
+    trackDownloadLinks.length = 0
+    trackPreviewProps.length = 0
+    showPreviewZipButton.value = false
+    clearInfos()
+    clearErrors()
+
+    // do work now!
+    let promises:PromiseLike<any>[] = [];
+    for(let i =0; i<g_fileCount.value; ++i){
+        const f = srcFiles[i];
+
+        promises.push(promiseReadFile(f).then(myFile => {
+            return promiseConvertFormat(myFile, fileFormatSelected.value).then(myFile => {
+                g_files.push(myFile);
+                fileProgress.value = g_files.length / g_fileCount.value
+            })
+        }));
+    }
+
+    Promise.allSettled(promises).then(function (results) {
+        infoList.show = true
+
+		results.forEach(r => {
+			if (r.status === 'rejected') {
+				appendError(r.reason);
+			}
+		});
+
+        g_files = g_files.filter(myFile => { return myFile && myFile.converted.length > 0; });
+        g_files.sort((a, b) => a.name.localeCompare(b.name)); // 按文件名排序
+
+        if(g_files.length > 0){
+            const zipHint = '转换'+fileFormatSelected.value+'合辑_'+DF.timestampToString(costTimestampBegin / 1000, 'YYYYMMDD-HHmmss', false);
+            const zip = new JSZip();
+            const zipFolder = zip.folder(zipHint)!;
+
+            g_files.forEach(myFile => {
+                myFile.converted.forEach(c => { zipFolder.file(c.name, c.content!); });
+
+                if (myFile.keepSameFormat)
+                    ++infoList.same;
+                else
+                    ++infoList.converted;
+            });
+
+            zip.generateAsync({
+                compression: "DEFLATE",
+                compressionOptions : {level:6},
+                type: "blob",
+                platform: "DOS",
+                mimeType: 'application/zip'
+            }).then((zipBlob) => {
+                // done
+                const dl:TrackDownload = {
+                    text:zipHint+'.zip',
+                    href:URL.createObjectURL(zipBlob),
+                    sizeHint:UTILS.byteToHumanReadableSize(zipBlob.size)
+                }
+                trackDownloadLinks.push(dl)
+
+                fileProgress.value=1;
+                showPreviewZipButton.value = true
+                convertedCostTime.value = UTILS.millisecondToHumanReadableString(DF.now() - costTimestampBegin)
+            })
+        } else {
+            appendError('Zip文件内容为空')
+            fileProgress.value=1;
+            convertedCostTime.value = UTILS.millisecondToHumanReadableString(DF.now() - costTimestampBegin)
+        }
+	});
+}
+
+function appendError(s:string) {
+    g_errorList.push(s)
+}
+
+function clearErrors() {
+    g_errorList.length=0
+}
+
+function clearInfos(){
+    infoList.show = false
+    infoList.converted = infoList.same = 0
+}
+
+function listAllFiles(){
+    showPreviewZipButton.value = false
+    g_files.forEach((myFile) => {
+        myFile.converted.forEach(c => {
+            const trackFile = c.trackFile!;
+            const paths = trackFile.lines.concat(trackFile.tracks);
+
+            const props:TrackPreviewProps ={
+                paintResult:TRACK.paint(paths, canvasWidth.value, canvasHeight.value)!,
+                canvasWidth:canvasWidth.value,
+                canvasHeight:canvasHeight.value,
+                filename:c.name,
+                fileBlob:new Blob([c.content!]),
+                keepSameFormat:myFile.keepSameFormat,
+                trackPointCount:trackFile.points.length,
+                trackLineCount:trackFile.lines.length,
+                trackPathCount:trackFile.tracks.length
+            }
+
+            trackPreviewProps.push(props)
+        });
+    });
+}
+
+// ---- promise 1 ----
+type ReadFileResolve = (myFile:MyFile) => void
+const promiseReadFile = (file:File) => new Promise(function (resolve:ReadFileResolve, reject) {
+    // API: resolve(MyFile)
+    const reader = new FileReader();
+    reader.onload = () => {
+        let f = new MyFile(file.name);
+        f.content = reader.result as string;
+        resolve(f);
+    };
+    reader.onerror = reject;
+    reader.onabort = reject;
+    reader.readAsText(file);
+});
+
+type ConvertFormatResolve = (myFile:MyFile) => void
+const promiseConvertFormat = (myFile:MyFile, destFormat:string) => new Promise(function(resolve:ConvertFormatResolve, reject) {
+    // API: resolve(MyFile)
+    const SrcName = myFile.name;
+    const SrcPrefixSuffix=myFile.parseName();
+
+    if(undefined == SrcPrefixSuffix){
+        reject(new Error('Invalid file extension: ' + SrcName));
+        return;
+    }
+
+    const SrcPrefix = SrcPrefixSuffix[0];
+    const SrcSuffix = SrcPrefixSuffix[1];
+
+    type FormFile = (content:string) => TRACK.TrackFile|undefined
+    let fromFile:FormFile;
+
+    switch(SrcSuffix){
+        case 'kml':
+            fromFile = (c:string) => {
+                const kmlDoc = KML.Document.fromFile(c)
+                return kmlDoc ? TRACK.TrackFile.fromKMLDocument(kmlDoc) : undefined
+            }
+            break;
+        case 'gpx':
+            fromFile = (c:string) => {
+                const gpxDoc = GPX.Document.fromFile(c)
+                return gpxDoc ? TRACK.TrackFile.fromGPXDocument(gpxDoc) : undefined
+            }
+            break;
+        default:
+            reject(new Error('Unsupport file extension: ' + SrcSuffix + ' of ' + SrcName));
+            return;
+    }
+
+    if(myFile.content)
+        myFile.trackFile=fromFile(myFile.content);
+
+    if(undefined==myFile.trackFile){
+        reject(new Error('Failed to build TrackFile object: ' + SrcName));
+        return;
+    }
+
+    // skip if has same format
+    if(!convertSameFormat.value && SrcSuffix == destFormat){
+        myFile.keepSameFormat = true;
+        myFile.converted=[{name:myFile.name, content:myFile.content, trackFile:myFile.trackFile}];
+        resolve(myFile);
+        return; // No need for convert
+    }
+
+    let newTrackFiles = [myFile.trackFile];
+    if(trackFileHookCodeEnabled && (window as any).trackFileHook)
+        newTrackFiles = (window as any).trackFileHook(myFile.trackFile);
+
+    if(0 == newTrackFiles.length){
+        reject(new Error('Removed by hook: ' + SrcName));
+        return;
+    }
+
+    type ToFile = (t:TRACK.TrackFile) => string
+    let toFile:ToFile;
+
+    switch(destFormat){
+        case 'kml':
+            toFile = (t:TRACK.TrackFile) => t.toKMLDocument().toFile(beautifyExport.value);
+            break;
+        case 'gpx':
+            toFile = (t:TRACK.TrackFile) => t.toGPXDocument().toFile(beautifyExport.value);
+            break;
+        default:
+            reject(new Error('Unsupport dest format: ' + destFormat));
+            return;
+    }
+    const NewContents = newTrackFiles.map(toFile);
+    const NewContentLength = NewContents.length;
+    const ZeroPadWidth = UTILS.intWidth(NewContentLength);
+
+    type NewFileNameFunc = (idx:number) => string
+    let newFileNameFunc:NewFileNameFunc
+    if(1==NewContentLength)
+        newFileNameFunc = idx => SrcPrefix+'.'+destFormat;
+    else
+        newFileNameFunc = idx => SrcPrefix + '_' + UTILS.zeroPad(idx+1, ZeroPadWidth) + '.' + destFormat;
+
+    myFile.converted=NewContents.map((c,idx) => {
+        return {name:newFileNameFunc(idx), content:c, trackFile:newTrackFiles[idx]}
+    });
+
+    resolve(myFile);
+});
+
+// ---- promise 2 ----
+
+// value=-1: indeterminate;
+// value=[0,1): determinate;
+// -2: hide
+watch(fileProgress, (value: number) => {
+    const pb = progressBar.value as HTMLProgressElement
+    if (value >= 0 && value <= 1)
+        pb.value = value
+    else if(value == -1)
+        pb.removeAttribute('value')
+});
 
 </script>
 
