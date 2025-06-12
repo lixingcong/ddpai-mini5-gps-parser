@@ -1,7 +1,7 @@
 <template>
     <div>
         <div>
-            <input type="file" id="select-files" name="files[]" multiple accept=".kml,.gpx" />
+            <input type="file" ref="fileInput" name="files[]" multiple accept=".kml,.gpx" />
         </div>
 
         <div>
@@ -12,7 +12,7 @@
             </select>
 
             <span class="btn-spacer">
-                <button id="convert">执行</button>
+                <button @click="onClickedConvert">执行</button>
             </span>
             <HelpTip text="仅支持本站导出的轨迹文件格式之间相互转换，不保证兼容其它工具"></HelpTip>
         </div>
@@ -32,20 +32,34 @@
                 <input type="number" v-model="canvasHeight" min="40" max="1600" style="max-width: 5em;" />
             </div>
             <div class="btn-container">
-                <label><input type="checkbox" v-model="trackFileHookCodeVisible"></input>对TrackFile进行后处理</label>
+                <label><input type="checkbox" v-model="trackFileHookCodeEnabled"></input>对TrackFile进行后处理</label>
                 <HelpTip text="构建TrackFile对象，对轨迹进行后处理，如将路径坐标偏移，或者移除高度信息，需要对本项目源码熟悉"></HelpTip>
                 <a target="_blank"
                     href="https://github.com/lixingcong/ddpai-mini5-web-client/blob/master/trackfile-hook-sample.js">参考源码</a>
             </div>
-            <textarea v-model="trackFileHookCode" v-show="trackFileHookCodeVisible" rows="12" cols="0"></textarea>
+            <textarea v-model="trackFileHookCode" v-show="trackFileHookCodeEnabled" rows="12" cols="0"></textarea>
         </details>
+
+        <div id="progressBarDiv" style="display: none;">
+			<label>处理进度 </label>
+			<progress id="progressBar" value="-1"></progress>
+		</div>
+		<div id="exportedTrackList"></div>
+		<div id="infoList"></div>
+		<div id="errorList">
+			<div id="errorListHeader" style="display: none;">
+				错误信息（<label id="errorCount">0</label>条）
+			</div>
+			<div id="errorListBody"></div>
+		</div>
+        <component is="script" ref="scriptLoader" v-if="renderComponent"></component>
     </div>
 </template>
 
 <script setup lang="ts" name="Converter">
 import "@/views/ddpai.css"
 import HelpTip from "./HelpTip.vue"
-import { ref } from "vue"
+import { nextTick, ref } from "vue"
 
 let trackFileHookCode_ = `
 import { TrackFile } from "./track.js";
@@ -67,17 +81,67 @@ window.trackFileHook = function(trackFile){
 `
 
 let trackFileHookCode = ref(trackFileHookCode_)
-let trackFileHookCodeVisible = ref(false)
+let trackFileHookCodeEnabled = ref(false)
 let canvasWidth=ref(100)
 let canvasHeight=ref(70)
 let beautifyExport=ref(false)
 let convertSameFormat=ref(false)
+let fileInput = ref()
+let scriptLoader = ref()
+let renderComponent = ref(true)
 
 const fileFormatSelected=ref('kml')
 const fileFormatOptions = [
   { text: '转为KML', value: 'kml' },
   { text: '转为GPX', value: 'gpx' },
 ]
+
+async function onClickedConvert()
+{
+    (window as any).trackFileHook = undefined
+
+    // 强制刷新 https://medium.com/emblatech/ways-to-force-vue-to-re-render-a-component-df866fbacf47
+    renderComponent.value = false
+    await nextTick()
+
+    renderComponent.value = true
+    await nextTick()
+
+    let scriptDOM = scriptLoader.value as HTMLScriptElement
+    const now = Date.now()
+    scriptDOM.text = 'window.trackFileHook=function(){alert("XXX"+"'+now+'");}'
+
+    const waitHookToBeReady = async () => {
+        // https://stackoverflow.com/a/53269990/5271632
+        const t1 = Date.now();
+        while (undefined == (window as any).trackFileHook) {
+            if(Date.now() - t1 > 500){
+                console.log('timeout')
+                return;
+            }
+            await new Promise(resolve => requestAnimationFrame(resolve));
+        }
+    };
+
+    waitHookToBeReady().then(()=>{
+        let f = (window as any).trackFileHook
+        console.log('ok hook', f)
+        if(f)f()
+    })
+
+
+    // console.log(text)
+
+    const srcFiles = (fileInput.value as HTMLInputElement).files;
+    if(!srcFiles || srcFiles.length < 1){
+        // TODO: 输出错误 请至少上传一个文件
+        return;
+    }
+
+    if(trackFileHookCodeEnabled){
+
+    }
+}
 
 </script>
 
