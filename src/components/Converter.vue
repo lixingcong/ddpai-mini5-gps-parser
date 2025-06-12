@@ -31,12 +31,22 @@
                 <input type="number" id="canvas-height" min="40" max="1600" value="70" style="max-width: 5em;" />
             </div>
             <div class="btn-container">
-                <label><input type="checkbox" id="use-trackfile-hook"></input>对TrackFile进行后处理</label>
+                <label><input type="checkbox" v-model="trackFileHookCodeVisible" id="use-trackfile-hook"></input>对TrackFile进行后处理</label>
                 <HelpTip text="构建TrackFile对象，对轨迹进行后处理，如将路径坐标偏移，或者移除高度信息，需要对本项目源码熟悉"></HelpTip>
                 <a target="_blank"
                     href="https://github.com/lixingcong/ddpai-mini5-web-client/blob/master/trackfile-hook-sample.js">参考源码</a>
             </div>
-            <textarea id="trackfile-hook-func" rows="12" cols="0" style="display: none;">
+            <textarea id="trackfile-hook-func" v-model="trackFileHookCode" v-show="trackFileHookCodeVisible" rows="12" cols="0"></textarea>
+        </details>
+    </div>
+</template>
+
+<script setup lang="ts" name="Converter">
+import "@/views/ddpai.css"
+import HelpTip from "./HelpTip.vue"
+import { ref } from "vue"
+
+let trackFileHookCode_ = `
 import { TrackFile } from "./track.js";
 
 window.trackFileHook = function(trackFile){
@@ -52,15 +62,13 @@ window.trackFileHook = function(trackFile){
  trackFile.tracks.forEach(path => { path.wayPoints.forEach(offset); });
 
  return [trackFile]; // 若返回多个TrackFile对象，则分拆轨迹成多文件
-}</textarea>
-        </details>
+}
+`
 
-    </div>
-</template>
+let trackFileHookCode = ref(trackFileHookCode_)
+let trackFileHookCodeVisible = ref(false)
 
-<script setup lang="ts" name="Converter">
-import "@/views/ddpai.css"
-import HelpTip from "./HelpTip.vue";
+
 </script>
 
 <style lang="">
