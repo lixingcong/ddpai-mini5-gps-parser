@@ -1,0 +1,60 @@
+.card-content {
+    padding: 0.3em;
+    border-radius: 0 0 0.5em 0.5em;
+    border-width: 1px;
+    border-color: var(--border-color);
+    border-style: solid;
+    border-top-style: none;
+}
+
+.card-content-hidden {
+    max-height: 0;
+    overflow: hidden;
+}
+
+.card-title {
+    background-image: var(--title-bg);
+    color: var(--title-color);
+
+    padding: 0.3em;
+    margin-top: 0.5em;
+    border-radius: 0.5em 0.5em 0 0;
+}
+
+.card-title-hidden {
+    background-image: var(--title-bg);
+    color: var(--title-color);
+
+    padding: 0.3em;
+    margin-top: 0.5em;
+    border-radius: 0.5em 0.5em 0.5em 0.5em;
+}
+
+.warning {
+    padding: 0.5em;
+    border-radius: 0.5em;
+
+    border-width: 1px;
+    border-color: var(--border-color);
+    border-style: solid;
+}
+
+:root{
+    --title-bg: linear-gradient(to right, #0c3483 0%, #a2b6df 100%, #6b8cce 100%, #a2b6df 100%);
+    --title-color: white;
+    --table-zebra-bg: #c9ceed;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --body-bg-color: #111;
+        --text-color: white;
+        --border-color: white;
+        --table-zebra-bg: #363758;
+    }
+
+    body {
+        background-color: var(--body-bg-color);
+        color: var(--text-color);
+    }
+}

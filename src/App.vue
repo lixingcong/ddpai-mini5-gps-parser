@@ -1,9 +1,10 @@
-<script setup lang="ts">
-</script>
-
 <template>
-  你好！
+  <Converter></Converter>
 </template>
+
+<script setup lang="ts">
+import Converter from './components/Converter.vue';
+</script>
 
 <style scoped>
 </style>
