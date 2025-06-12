@@ -133,7 +133,7 @@ class Rte implements XmlIntf
     description:string|undefined
     rtepts:Rtept[]
 
-    constructor(name:strin|undefined, rtepts:Rtept[], description:string|undefined)
+    constructor(name:string|undefined, rtepts:Rtept[], description:string|undefined)
     {
         this.name = name;
         this.description = description;

@@ -5,9 +5,10 @@
         </div>
 
         <div>
-            <select id="select-convert-format">
-                <option value="kml">转为KML</option>
-                <option value="gpx">转为GPX</option>
+            <select v-model="fileFormatSelected">
+                <option v-for="option in fileFormatOptions" :value="option.value">
+                    {{ option.text }}
+                </option>
             </select>
 
             <span class="btn-spacer">
@@ -19,24 +20,24 @@
         <details>
             <summary>其它参数</summary>
             <div class="btn-container">
-                <label><input type="checkbox" id="enable-export-beautify"></input>美化缩进</label>
+                <label><input type="checkbox" v-model="beautifyExport"></input>美化缩进</label>
                 <HelpTip text="缩进：插入空白进行缩进对齐，牺牲文件尺寸，改善XML文件的可读性"></HelpTip>
-                <label><input type="checkbox" id="force-convert-same-fmt"></input>若格式相同也转换</label>
+                <label><input type="checkbox" v-model="convertSameFormat"></input>若格式相同也转换</label>
                 <HelpTip text="若输入文件格式与输出一致，如kml转kml，也进行强制转换。若不设置强制转换，则对源文件不做任何修改"></HelpTip>
             </div>
             <div class="btn-container">
                 <label>小地图长度</label>
-                <input type="number" id="canvas-width" min="40" max="1600" value="100" style="max-width: 5em;" />
+                <input type="number" v-model="canvasWidth" min="40" max="1600" style="max-width: 5em;" />
                 <label>高度</label>
-                <input type="number" id="canvas-height" min="40" max="1600" value="70" style="max-width: 5em;" />
+                <input type="number" v-model="canvasHeight" min="40" max="1600" style="max-width: 5em;" />
             </div>
             <div class="btn-container">
-                <label><input type="checkbox" v-model="trackFileHookCodeVisible" id="use-trackfile-hook"></input>对TrackFile进行后处理</label>
+                <label><input type="checkbox" v-model="trackFileHookCodeVisible"></input>对TrackFile进行后处理</label>
                 <HelpTip text="构建TrackFile对象，对轨迹进行后处理，如将路径坐标偏移，或者移除高度信息，需要对本项目源码熟悉"></HelpTip>
                 <a target="_blank"
                     href="https://github.com/lixingcong/ddpai-mini5-web-client/blob/master/trackfile-hook-sample.js">参考源码</a>
             </div>
-            <textarea id="trackfile-hook-func" v-model="trackFileHookCode" v-show="trackFileHookCodeVisible" rows="12" cols="0"></textarea>
+            <textarea v-model="trackFileHookCode" v-show="trackFileHookCodeVisible" rows="12" cols="0"></textarea>
         </details>
     </div>
 </template>
@@ -67,7 +68,16 @@ window.trackFileHook = function(trackFile){
 
 let trackFileHookCode = ref(trackFileHookCode_)
 let trackFileHookCodeVisible = ref(false)
+let canvasWidth=ref(100)
+let canvasHeight=ref(70)
+let beautifyExport=ref(false)
+let convertSameFormat=ref(false)
 
+const fileFormatSelected=ref('kml')
+const fileFormatOptions = [
+  { text: '转为KML', value: 'kml' },
+  { text: '转为GPX', value: 'gpx' },
+]
 
 </script>
 
