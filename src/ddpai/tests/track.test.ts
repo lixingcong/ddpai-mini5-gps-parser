@@ -3,7 +3,7 @@ import * as TRACK_I from '../types/track';
 import * as WP from '../waypoint'
 import { expect, test } from 'vitest'
 import * as TEST_COMMON from './common';
-import gd from 'node-gd';
+import * as GD from 'node-gd';
 
 let track = new TRACK.TrackFile('DocName');
 track.description = "Doc description xxx";
@@ -116,7 +116,7 @@ async function paint(paintResult:TRACK_I.PaintResult, jpgWidth:number, jpgHeight
             pathPointsArray.push(pathPoints);
     });
 
-    const img = await gd.createTrueColor(jpgWidth, jpgHeight);
+    const img = await GD.createTrueColor(jpgWidth, jpgHeight);
 
     img.fill(0, 0, 0xb0b0b0);
 
