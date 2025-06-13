@@ -1,39 +1,23 @@
 # ddpai-gps-parser
 
-This template should help get you started developing with Vue 3 in Vite.
+轨迹获取与转换
 
-## Recommended IDE Setup
+# 编译
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
+```bash
+# 安装依赖
 npm install
-```
 
-### Compile and Hot-Reload for Development
-
-```sh
+# 开发模式
 npm run dev
-```
 
-### Type-Check, Compile and Minify for Production
-
-```sh
+# 编译打包
 npm run build
-```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
+# 单元测试
 npm run test:unit
 ```
+
+# 依赖包
+
+- fast-xml-parser: 暂使用v4版本，因为v5版本有严重的性能问题
