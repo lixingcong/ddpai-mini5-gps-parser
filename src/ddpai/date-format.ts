@@ -1,4 +1,11 @@
 import dayjs from "dayjs"
+import updateLocale from 'dayjs/plugin/updateLocale'
+dayjs.extend(updateLocale)
+dayjs.updateLocale('en', {
+	weekdays: [
+		"周日", "周一", "周二", "周三", "周四", "周五", "周六"
+	]
+})
 
 // ts: 秒
 function timestampToString(ts:number, fmt:string, utc:boolean):string {
