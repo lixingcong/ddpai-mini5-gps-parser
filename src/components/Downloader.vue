@@ -112,6 +112,7 @@ import { type WayPointIntf } from "@/ddpai/types/waypoint";
 import * as KML from '@/ddpai/kml'
 import * as GPX from '@/ddpai/gpx'
 import * as DDPAI from '@/ddpai/ddpai'
+import * as DDPAI_I from '@/ddpai/types/ddpai'
 import * as RD from '@/RequestDecorator'
 import ProgressBar from './ProgressBar.vue'
 import TrackPreview from './TrackPreview.vue'
@@ -137,11 +138,13 @@ const singleFileDownloadProps:DownloadLinkProps = reactive({})
 
 let g_gpxPreprocessContents:{ [key: string]: string[] } = {}
 let g_timestampToWayPoints:{[key: number]: WayPointIntf} = {}
+var g_gpsFileListReq:string[] = []
 
 const WayPointDescriptionFormat = 'YYYYMMDD HH:mm'; // 描述一个点的注释日期格式
 const HtmlTableFormat = 'MM-DD HH:mm'; // HTML网页中的日期格式
 
 const thresholdSliderRange=[0,1000]
+const urlAPIGpsFileListReq = import.meta.env.VITE_DDPAI_SERVER_HOST + import.meta.env.VITE_DDPAI_APIGpsFileListReq
 
 const fileFormatSelected=ref('kml')
 const fileFormatOptions = [
@@ -199,14 +202,39 @@ function HtmlTableTimestampToString(a:number, b:number):string {
 }
 
 function getFromHttpServer(){
-    // TODO: $('#fetch-gps-file-list').click() 移植
+	clearDownloads()
+	clearErrors()
+	let g_gpsFileListReq:DDPAI_I.GPSFile[]=[]
+
+	promiseHttpGetAjax(urlAPIGpsFileListReq).then(response => {
+		g_gpsFileListReq = DDPAI.API_GpsFileListReqToArray(response)
+		if (g_gpsFileListReq.length > 0) {
+			const groupGpsFileListReq = () => {
+				let grouped:{[key:string]: number[]} = {};
+				g_gpsFileListReq.forEach((g, idx) => {
+					let from = g['from'];
+					let fromDateStr = DF.timestampToString(from, 'MM-dd', false);
+					if (!(fromDateStr in grouped))
+						grouped[fromDateStr] = [];
+					grouped[fromDateStr].push(idx);
+				});
+				return grouped;
+			}
+
+			const grouped = groupGpsFileListReq();
+			const groupedKeys = Object.keys(grouped).sort((a, b) => { return a.localeCompare(b); }); // oldest date first
+		} else {
+			infoList.value.innerHTML='空白结果'
+		}
+	}, rejectedReason => {
+		appendError(rejectedReason);
+	});
 }
 
 function exportToTrack(singleFile:boolean){
     const costTimestampBegin = DF.now();
 	const timestamps = Object.keys(g_timestampToWayPoints).map(Number).sort(); // 按时间排序
 
-	infoList.value.innerHTML = ''
 	clearDownloads()
 
 	if (timestamps.length > 0) {
@@ -443,6 +471,7 @@ function clearDownloads(){
 	zipDownloadProps.blob = undefined
 	singleFileDownloadProps.blob = undefined
 	trackPreviewProps.length = 0
+	infoList.value.innerHTML = ''
 }
 
 // ---- promise 1 ----
@@ -516,6 +545,25 @@ const promiseReadGit = async (filename:string, blob:Blob) => {
 	} // end of if(entries)
 
 	return Promise.reject(new Error('Can not open archive: ' + filename));
+}
+
+type HttpGetAjaxResolve = (s:string) => void
+function promiseHttpGetAjax(url:string) {
+	return new Promise(function (resolve:HttpGetAjaxResolve, reject) {
+		let xhr = new XMLHttpRequest();
+		xhr.responseType = 'text';
+		xhr.timeout = 2000;
+		xhr.open('GET', url, true);
+		xhr.send();
+		xhr.onreadystatechange = function () {
+			if (this.readyState === 4) {
+				if (this.status === 200)
+					resolve(this.response as string);
+				else
+					reject(new Error('(' + xhr.status + ') ' + url));
+			}
+		}
+	});
 }
 
 const parseGitAndGpxFromBlob = (filename:string, blob:Blob) => {
