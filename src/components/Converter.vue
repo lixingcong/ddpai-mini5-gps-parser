@@ -424,6 +424,9 @@ const promiseConvertFormat = (myFile:MyFile, destFormat:string) => new Promise(f
 
 </script>
 
-<style lang="">
-
+<style scoped>
+textarea {
+	width: 100%;
+	font-size: 0.8em;
+}
 </style>

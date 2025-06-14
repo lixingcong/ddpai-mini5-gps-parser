@@ -1,3 +1,12 @@
+.btn-spacer{
+	padding: 0.2em;
+}
+
+.btn-container {
+	display:flex;
+	width: 100%;
+}
+
 .card-content {
     padding: 0.3em;
     border-radius: 0 0 0.5em 0.5em;
@@ -32,6 +41,10 @@
 
 .error {
     color: red
+}
+
+summary {
+	height: 1.8em;
 }
 
 :root{

@@ -66,4 +66,9 @@ const downloadedHint = computed(():string => {
 
 </script>
 
-<style scoped></style>
+<style scoped>
+canvas {
+	background: #c9cfcf;
+	border: 1px solid black;
+}
+</style>

@@ -6,7 +6,6 @@
 <script setup lang="ts">
 import Converter from './components/Converter.vue';
 import Downloader from './components/Downloader.vue';
-import "@/views/ddpai.css"
 import "@/views/style.css"
 </script>
 

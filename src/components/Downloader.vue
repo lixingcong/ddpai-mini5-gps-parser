@@ -10,14 +10,16 @@
             </span>
         </div>
 
-        <div ref="entryList"></div>
+        <div v-show="gpsFileGroups.length > 0">
+			<GPSFileTable @selectedGpsFileIdxes="setSelectedGpsFileIdxes" :groups="gpsFileGroups" :gpsFiles="g_gpsFileListReq" :serverHostUrl="serverHostUrl"></GPSFileTable>
+		</div>
 
         <div class="btn-container">
             <span class="btn-spacer">
-                <button class="set-gpx-src" value="0">使用记录仪已选</button>
+                <button @click="useHttpFiles">使用记录仪已选</button>
             </span>
             <span class="btn-spacer">
-                <button @click="useLocalFiles" value="1">使用本地文件</button>
+                <button @click="useLocalFiles">使用本地文件</button>
             </span>
         </div>
 
@@ -100,9 +102,10 @@
 </template>
 
 <script setup lang="ts" name="Downloader">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, nextTick } from 'vue'
 import { parseTar } from 'tarparser';
 import HelpTip from './HelpTip.vue'
+import GPSFileTable from './GPSFileTable.vue';
 import * as UTILS from '@/ddpai/utils'
 import * as DF from '@/ddpai/date-format'
 import * as TRACK from '@/ddpai/track'
@@ -119,10 +122,10 @@ import TrackPreview from './TrackPreview.vue'
 import DownloadLink from './DownloadLink.vue'
 import {type TrackPreviewProps }  from '../types/TrackPreview'
 import {type DownloadLinkProps }  from '../types/DownloadLink'
+import { type GPSFileGroup } from '@/types/GPSFileTable';
 import JSZip from 'jszip'
 
 let hideContent = ref(false)
-let entryList =ref()
 let enableTrack = ref(true)
 let enableLine = ref(false)
 let enableTwoPoint = ref(true)
@@ -135,16 +138,19 @@ let infoList = ref()
 let trackPreviewProps:TrackPreviewProps[] = reactive([])
 const zipDownloadProps:DownloadLinkProps = reactive({})
 const singleFileDownloadProps:DownloadLinkProps = reactive({})
+const gpsFileGroups:GPSFileGroup[] = reactive([])
+let selectedGpsFileIdxes:number[] = [] // 待下载gpx/git文件的数组索引，对应g_gpsFileListReq数组下标
 
-let g_gpxPreprocessContents:{ [key: string]: string[] } = {}
-let g_timestampToWayPoints:{[key: number]: WayPointIntf} = {}
-var g_gpsFileListReq:string[] = []
+let g_gpxPreprocessContents:{ [key: string]: string[] } = {} // 字典，为json中的startTime到gpx原文件内容的映射（只保留GPGGA和GPRMC行）
+let g_timestampToWayPoints:{[key: number]: WayPointIntf} = {} // 字典，为timestamp到WayPoint对象的映射
+const g_gpsFileListReq:DDPAI_I.GPSFile[] = reactive([]) // 数组，HTTP链接，每个gpx/git的直链
 
-const WayPointDescriptionFormat = 'YYYYMMDD HH:mm'; // 描述一个点的注释日期格式
 const HtmlTableFormat = 'MM-DD HH:mm'; // HTML网页中的日期格式
+const WayPointDescriptionFormat = 'YYYYMMDD HH:mm'; // 描述一个点的注释日期格式
 
 const thresholdSliderRange=[0,1000]
-const urlAPIGpsFileListReq = import.meta.env.VITE_DDPAI_SERVER_HOST + import.meta.env.VITE_DDPAI_APIGpsFileListReq
+const serverHostUrl = ref(import.meta.env.VITE_DDPAI_SERVER_HOST as string)
+const urlAPIGpsFileListReq = serverHostUrl.value + import.meta.env.VITE_DDPAI_APIGpsFileListReq
 
 const fileFormatSelected=ref('kml')
 const fileFormatOptions = [
@@ -193,27 +199,22 @@ function simpleTimestampToString(a:number, b:number):string {
 	return from + '~' + to;
 }
 
-function HtmlTableTimestampToString(a:number, b:number):string {
-	const from = DF.timestampToString(a, HtmlTableFormat, false);
-	const to = DF.timestampToString(b, HtmlTableFormat, false);
-	if(from.substring(0,5) == to.substring(0,5)) // same date
-		return from.substring(6) + '到' + to.substring(6);
-	return from + '<br/>' + to;
-}
-
-function getFromHttpServer(){
+async function getFromHttpServer(){
 	clearDownloads()
 	clearErrors()
-	let g_gpsFileListReq:DDPAI_I.GPSFile[]=[]
+	g_gpsFileListReq.length = 0
+	gpsFileGroups.length = 0
+	await nextTick()
 
-	promiseHttpGetAjax(urlAPIGpsFileListReq).then(response => {
-		g_gpsFileListReq = DDPAI.API_GpsFileListReqToArray(response)
+	promiseHttpGetAjax(urlAPIGpsFileListReq, true).then(response => {
+		const newGpsFileListReq = DDPAI.API_GpsFileListReqToArray(response as string)
+		Object.assign(g_gpsFileListReq, newGpsFileListReq)
+
 		if (g_gpsFileListReq.length > 0) {
 			const groupGpsFileListReq = () => {
 				let grouped:{[key:string]: number[]} = {};
-				g_gpsFileListReq.forEach((g, idx) => {
-					let from = g['from'];
-					let fromDateStr = DF.timestampToString(from, 'MM-dd', false);
+				g_gpsFileListReq.forEach((gpsFile, idx) => {
+					let fromDateStr = DF.timestampToString(gpsFile.from, 'MM-DD', false);
 					if (!(fromDateStr in grouped))
 						grouped[fromDateStr] = [];
 					grouped[fromDateStr].push(idx);
@@ -223,8 +224,19 @@ function getFromHttpServer(){
 
 			const grouped = groupGpsFileListReq();
 			const groupedKeys = Object.keys(grouped).sort((a, b) => { return a.localeCompare(b); }); // oldest date first
-		} else {
-			infoList.value.innerHTML='空白结果'
+
+			groupedKeys.forEach(k => {
+				const sortedIdxes = grouped[k].sort((a, b) => {
+					const ta = g_gpsFileListReq[a].from;
+					const tb = g_gpsFileListReq[b].from;
+					return ta - tb; // oldest date first
+				});
+
+				gpsFileGroups.push({
+					name: k,
+					gpsFileArrayIdxes: sortedIdxes
+				})
+			})
 		}
 	}, rejectedReason => {
 		appendError(rejectedReason);
@@ -415,6 +427,42 @@ function refreshDownloadProgress(costTime:number = -1) {
     infoList.value.innerHTML= pointTitle + pointCount + finshedText + '<br/>'
 }
 
+function useHttpFiles(){
+    if(selectedGpsFileIdxes.length < 1){
+        appendError('从记录仪获取后，请至少在表格中勾选一行')
+        return;
+    }
+
+	const costTimestampBegin = DF.now();
+	fileProgress.value = -1
+	clearErrors();
+
+	let promises:PromiseLike<any>[] = [];
+	const httpGetDecorator = new RD.RequestDecorator(4, promiseHttpGetAjax)
+
+	selectedGpsFileIdxes.forEach(gpsFileIdx => {
+		const gpsFile = g_gpsFileListReq[gpsFileIdx]
+		gpsFile.filename.forEach(filename => {
+			const url = serverHostUrl.value + filename
+			promises.push(httpGetDecorator.request(url, false).then(
+				blob => parseGitAndGpxFromBlob(filename, blob)
+			))
+		})
+	})
+
+	Promise.allSettled(promises).then(function (results) {
+		results.forEach(r => {
+			if (r.status === 'rejected') {
+				appendError(r.reason);
+			}
+		});
+
+		mergePreprocessed();
+		fileProgress.value = -2
+		refreshDownloadProgress(DF.now() - costTimestampBegin);
+	});
+}
+
 function useLocalFiles(){
 	const srcFiles = (fileInput.value as HTMLInputElement).files;
     if(!srcFiles || srcFiles.length < 1){
@@ -472,6 +520,11 @@ function clearDownloads(){
 	singleFileDownloadProps.blob = undefined
 	trackPreviewProps.length = 0
 	infoList.value.innerHTML = ''
+}
+
+function setSelectedGpsFileIdxes(idxes: number[]){
+	selectedGpsFileIdxes = idxes
+	//console.log('setSelectedGpsFileIdxes', selectedGpsFileIdxes)
 }
 
 // ---- promise 1 ----
@@ -547,19 +600,22 @@ const promiseReadGit = async (filename:string, blob:Blob) => {
 	return Promise.reject(new Error('Can not open archive: ' + filename));
 }
 
-type HttpGetAjaxResolve = (s:string) => void
-function promiseHttpGetAjax(url:string) {
+type HttpGetAjaxResolve = (content:string|Blob) => void
+function promiseHttpGetAjax(url:string, isText:boolean) {
 	return new Promise(function (resolve:HttpGetAjaxResolve, reject) {
 		let xhr = new XMLHttpRequest();
-		xhr.responseType = 'text';
+		xhr.responseType = isText ? 'text' : 'blob';
 		xhr.timeout = 2000;
 		xhr.open('GET', url, true);
 		xhr.send();
 		xhr.onreadystatechange = function () {
 			if (this.readyState === 4) {
-				if (this.status === 200)
-					resolve(this.response as string);
-				else
+				if (this.status === 200){
+					if(isText)
+						resolve(this.response as string);
+					else
+						resolve(this.response as Blob)
+				}else
 					reject(new Error('(' + xhr.status + ') ' + url));
 			}
 		}
@@ -577,4 +633,9 @@ const parseGitAndGpxFromBlob = (filename:string, blob:Blob) => {
 
 </script>
 
-<style scoped></style>
+<style scoped>
+input[type="range"]{
+	overflow: hidden;
+	min-width: 18em;
+}
+</style>
