@@ -1,5 +1,6 @@
 <template>
-    <div>
+    <div :class="hideContent ? 'card-title-hidden' : 'card-title'" @click="hideContent = !hideContent">轨迹文件转换</div>
+    <div :class="hideContent ? 'card-content-hidden' : 'card-content'">
         <div>
             <input type="file" ref="fileInput" name="files[]" multiple accept=".kml,.gpx" />
         </div>
@@ -12,7 +13,7 @@
             </select>
 
             <span class="btn-spacer">
-                <button @click="onClickedConvert">执行</button>
+                <button @click="onClickedConvert">执行转换</button>
             </span>
             <HelpTip text="仅支持本站导出的轨迹文件格式之间相互转换，不保证兼容其它工具"></HelpTip>
         </div>
@@ -40,10 +41,7 @@
             <textarea v-model="trackFileHookCode" v-show="trackFileHookCodeEnabled" rows="12" cols="0"></textarea>
         </details>
 
-        <div v-show="fileProgress>-1.5">
-			<label>处理进度 </label>
-			<progress ref="progressBar" value="-1"></progress>
-		</div>
+        <ProgressBar :progress="fileProgress"></ProgressBar>
 		<div>
             <div v-for="dl in trackDownloadLinks" class="btn-spacer">
                 <a :text="dl.text" :download="dl.text" :href="dl.href"></a>,{{ dl.sizeHint }}
@@ -57,31 +55,28 @@
                 :paintResult="p.paintResult"
                 :canvasWidth="p.canvasWidth"
                 :canvasHeight="p.canvasHeight"
-                :filename="p.filename"
-                :fileBlob="p.fileBlob"
-                :keepSameFormat="p.keepSameFormat"
-                :trackPointCount="p.trackPointCount"
-                :trackLineCount="p.trackLineCount"
-                :trackPathCount="p.trackPathCount">
+                :addToClass="p.addToClass"
+				:convert="p.convert"
+				:download="p.download"
+                :downloadLink="p.downloadLink">
             </TrackPreview>
         </div>
 		<div v-show="infoList.show">
             源数目: {{ g_fileCount }}, 已转换: {{ infoList.converted }}, 无需转换: {{ infoList.same }}<br/>
             耗时{{ convertedCostTime }}
         </div>
-		<div id="errorList" v-show="g_errorList.length>0">
+		<div v-show="g_errorList.length>0">
 			<div>错误信息（{{g_errorList.length}}条）</div>
-			<div v-for="(e,idx) in g_errorList">{{ idx+1 }}: {{ e }}</div>
+			<div v-for="(e,idx) in g_errorList" class="error">{{ idx+1 }}: {{ e }}</div>
 		</div>
         <component is="script" ref="scriptLoader" v-if="renderComponent"></component>
     </div>
 </template>
 
 <script setup lang="ts" name="Converter">
-import "@/views/ddpai.css"
 import HelpTip from "./HelpTip.vue"
 import TrackPreview from './TrackPreview.vue'
-import {type Props as TrackPreviewProps }  from '../types/TrackPreview'
+import {type TrackPreviewProps, type ConvertProps }  from '../types/TrackPreview'
 import { nextTick, reactive, ref, watch } from "vue"
 import { type Converted, MyFile } from "@/converter"
 import * as DF from '@/ddpai/date-format'
@@ -90,10 +85,9 @@ import * as KML from '@/ddpai/kml'
 import * as GPX from '@/ddpai/gpx'
 import * as UTILS from '@/ddpai/utils'
 import JSZip from 'jszip'
+import ProgressBar from "./ProgressBar.vue"
 
-let trackFileHookCode_ = `
-import { TrackFile } from "./track.js";
-
+let trackFileHookCode_ = `// 函数名字是固定值
 window.trackFileHook = function(trackFile){
  const offset = wp => {
    const X = 0.1;
@@ -106,10 +100,12 @@ window.trackFileHook = function(trackFile){
  trackFile.lines.forEach(path => { path.wayPoints.forEach(offset); });
  trackFile.tracks.forEach(path => { path.wayPoints.forEach(offset); });
 
- return [trackFile]; // 若返回多个TrackFile对象，则分拆轨迹成多文件
+ // 若返回多个TrackFile对象，则分拆轨迹成多文件
+ return [trackFile];
 }
 `
 
+let hideContent = ref(true)
 let trackFileHookCode = ref(trackFileHookCode_)
 let trackFileHookCodeEnabled = ref(false)
 let canvasWidth=ref(100)
@@ -120,7 +116,6 @@ let fileInput = ref()
 let scriptLoader = ref()
 let renderComponent = ref(true)
 let fileProgress = ref(-2)
-let progressBar = ref()
 let infoList = reactive({
     converted : 0,
     same: 0,
@@ -256,6 +251,7 @@ function beginToExport(srcFiles:FileList){
                 mimeType: 'application/zip'
             }).then((zipBlob) => {
                 // done
+                // TODO: 采用DownloadLink组件
                 const dl:TrackDownload = {
                     text:zipHint+'.zip',
                     href:URL.createObjectURL(zipBlob),
@@ -299,12 +295,17 @@ function listAllFiles(){
                 paintResult:TRACK.paint(paths, canvasWidth.value, canvasHeight.value)!,
                 canvasWidth:canvasWidth.value,
                 canvasHeight:canvasHeight.value,
-                filename:c.name,
-                fileBlob:new Blob([c.content!]),
-                keepSameFormat:myFile.keepSameFormat,
-                trackPointCount:trackFile.points.length,
-                trackLineCount:trackFile.lines.length,
-                trackPathCount:trackFile.tracks.length
+                addToClass: false,
+                convert:{
+                    keepSameFormat:myFile.keepSameFormat,
+                    trackPointCount:trackFile.points.length,
+                    trackLineCount:trackFile.lines.length,
+                    trackPathCount:trackFile.tracks.length
+                },
+                downloadLink:{
+                    filename:c.name,
+                    blob:new Blob([c.content!]),
+                }
             }
 
             trackPreviewProps.push(props)
@@ -379,7 +380,7 @@ const promiseConvertFormat = (myFile:MyFile, destFormat:string) => new Promise(f
     }
 
     let newTrackFiles = [myFile.trackFile];
-    if(trackFileHookCodeEnabled && (window as any).trackFileHook)
+    if(trackFileHookCodeEnabled.value && (window as any).trackFileHook)
         newTrackFiles = (window as any).trackFileHook(myFile.trackFile);
 
     if(0 == newTrackFiles.length){
@@ -420,17 +421,6 @@ const promiseConvertFormat = (myFile:MyFile, destFormat:string) => new Promise(f
 });
 
 // ---- promise 2 ----
-
-// value=-1: indeterminate;
-// value=[0,1): determinate;
-// -2: hide
-watch(fileProgress, (value: number) => {
-    const pb = progressBar.value as HTMLProgressElement
-    if (value >= 0 && value <= 1)
-        pb.value = value
-    else if(value == -1)
-        pb.removeAttribute('value')
-});
 
 </script>
 

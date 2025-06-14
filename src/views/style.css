@@ -30,13 +30,8 @@
     border-radius: 0.5em 0.5em 0.5em 0.5em;
 }
 
-.warning {
-    padding: 0.5em;
-    border-radius: 0.5em;
-
-    border-width: 1px;
-    border-color: var(--border-color);
-    border-style: solid;
+.error {
+    color: red
 }
 
 :root{
@@ -51,10 +46,15 @@
         --text-color: white;
         --border-color: white;
         --table-zebra-bg: #363758;
+        --download-link-color: #dc617c;
     }
 
     body {
         background-color: var(--body-bg-color);
         color: var(--text-color);
+    }
+
+    a {
+        color: var(--download-link-color)
     }
 }

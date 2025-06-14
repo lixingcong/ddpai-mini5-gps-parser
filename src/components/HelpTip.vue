@@ -1,11 +1,16 @@
 <template>
     <span class="help-tip">
-        <p>{{ props.text }}</p>
+        <p>{{ content }}</p>
     </span>
 </template>
 
 <script setup lang="ts" name="HelpTip">
+import { computed } from 'vue';
+
 const props = defineProps<{text:string}>()
+const content = computed(()=>{
+	return props.text.replace(/\n/g, '<br/>')
+})
 </script>
 
 <style scoped>
