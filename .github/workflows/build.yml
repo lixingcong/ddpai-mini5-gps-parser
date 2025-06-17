@@ -1,0 +1,52 @@
+name: Build and Deploy
+on:
+  push:
+    tags:
+      - 'ci*'
+      - 'v[0-9]+*'
+permissions:
+  contents: write
+jobs:
+  build-and-deploy:
+    concurrency: ci-${{ github.ref }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install apt packages
+        run: sudo apt install libgd-dev -y
+
+      - name: Setup Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Set output vars
+        id: set_output_vars
+        run: |
+          COMMIT_VERSION=$(git describe --tags --always --dirty="-dev")
+          echo "RELEASES_TAG=$COMMIT_VERSION"
+          echo "RELEASES_TAG=$COMMIT_VERSION" >> ${GITHUB_ENV}
+
+          BUILD_DATETIME=$(TZ=UTC-8 date -R)
+          echo "BUILD_DATETIME=$BUILD_DATETIME"
+          echo "BUILD_DATETIME=$BUILD_DATETIME" >> ${GITHUB_ENV}
+
+      - name: Install and Build
+        run: |
+          npm install
+          npm run build
+          tar -cvzf dist.tar.gz dist
+
+      - name: Deploy
+        uses: ncipollo/release-action@main
+        if: ${{ env.PACKAGED_STATUS }} == 'success' && !cancelled()
+        with:
+          tag: ${{ env.RELEASES_TAG }}
+          artifacts: dist.tar.gz
+          allowUpdates: true
+          removeArtifacts: false
+          replacesArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: ${{ env.BUILD_DATETIME }}
