@@ -1,6 +1,9 @@
 import dayjs from "dayjs"
 import updateLocale from 'dayjs/plugin/updateLocale'
+import utc from 'dayjs/plugin/utc'
+
 dayjs.extend(updateLocale)
+dayjs.extend(utc)
 dayjs.updateLocale('en', {
 	weekdays: [
 		"周日", "周一", "周二", "周三", "周四", "周五", "周六"
@@ -9,9 +12,9 @@ dayjs.updateLocale('en', {
 
 // ts: 秒
 function timestampToString(ts:number, fmt:string, utc:boolean):string {
-    if(utc)
-        ts-=28800 // 固定写死GMT+8
 	const d = dayjs.unix(ts)
+	if(utc)
+		return d.utc().format(fmt)
 	return d.format(fmt)
 }
 

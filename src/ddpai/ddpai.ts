@@ -2,7 +2,7 @@ import * as WP from './waypoint';
 import * as DDPAI from './types/ddpai'
 import type { WayPointIntf } from './types/waypoint';
 
-const LocaTimestampOffset = (new Date()).getTimezoneOffset() * 60 // GMT与本地时区相差秒数，若东八区则该值为负数
+const FirmwareTimestampOffset = -28800 // 盯盯拍固件中timestamp时差（猜想是厂商的固定值？没有参数可以更改该值）
 const LatLonDecimal = 6 // 经纬度的小数位数，6位足够了。按照1纬度111km计算，保留六位小数可以精确到0.1米
 
 
@@ -60,8 +60,7 @@ function API_GpsFileListReqToArray(inputJson:string):DDPAI.GPSFile[] {
     let ret:DDPAI.GPSFile[]= [];
     if (0 == j.errcode) {
         const file = JSON.parse(j.data).file as DDPAI.API_GPSFile[];
-        // 注意盯盯拍固件中timestamp的有时差，可能是程序员写死了。
-        const timespan = file.map(f => [parseInt(f.starttime) + LocaTimestampOffset, parseInt(f.endtime) + LocaTimestampOffset] as DDPAI.Interval);
+        const timespan = file.map(f => [parseInt(f.starttime) + FirmwareTimestampOffset, parseInt(f.endtime) + FirmwareTimestampOffset] as DDPAI.Interval);
         const filenames = file.map(f => f.name)
         const mergedResult = mergeIntervals(timespan);
 

@@ -131,9 +131,9 @@ class Rte implements XmlIntf
 {
     name:string|undefined
     description:string|undefined
-    rtepts:Rtept[]
+    rtepts:Wpt[]
 
-    constructor(name:string|undefined, rtepts:Rtept[], description:string|undefined)
+    constructor(name:string|undefined, rtepts:Wpt[], description:string|undefined)
     {
         this.name = name;
         this.description = description;
@@ -153,18 +153,10 @@ class Rte implements XmlIntf
     {
         let ret = new Rte(o.name, [], undefined);
         if(undefined != o.rtept)
-            ret.rtepts = (o.rtept as any[]).map(o => Rtept.fromObject(o));
+            ret.rtepts = (o.rtept as any[]).map(o => Wpt.fromObject(o));
 
         ret.description=o.desc;
         return ret;
-    }
-}
-
-class Rtept extends Wpt
-{
-    constructor(lat:number, lon:number, altitude:number|undefined)
-    {
-        super(undefined, lat, lon, altitude, undefined, undefined)
     }
 }
 
@@ -203,9 +195,9 @@ class Trk implements XmlIntf
 
 class Trkseg implements XmlIntf
 {
-    trkpts:Trkpt[]
+    trkpts:Wpt[]
 
-    constructor(trkpts:Trkpt[] = [])
+    constructor(trkpts:Wpt[] = [])
     {
         this.trkpts = trkpts;
     }
@@ -221,16 +213,8 @@ class Trkseg implements XmlIntf
     {
         let ret = new Trkseg;
         if(undefined != o.trkpt)
-            ret.trkpts = (o.trkpt as any[]).map(o => Trkpt.fromObject(o));
+            ret.trkpts = (o.trkpt as any[]).map(o => Wpt.fromObject(o));
         return ret;
-    }
-}
-
-class Trkpt extends Wpt
-{
-    constructor(lat:number, lon:number, timestamp:number, altitude:number|undefined)
-    {
-        super(undefined,lat,lon,altitude,timestamp,undefined);
     }
 }
 
@@ -238,8 +222,6 @@ export {
     Document,
     Wpt,
     Rte,
-    Rtept,
     Trk,
-    Trkseg,
-    Trkpt
+    Trkseg
 }

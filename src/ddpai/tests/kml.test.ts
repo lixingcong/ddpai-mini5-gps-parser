@@ -89,7 +89,7 @@ test('KML', () => {
 
     if(documentFromContent){
         const same = TEST_COMMON.isObjectEqual(document, documentFromContent)
-        expect.soft(same).toBeTruthy()
+        expect.soft(document).toEqual(documentFromContent)
 
         if(!same){
             // write the NG result
