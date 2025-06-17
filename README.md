@@ -1,8 +1,6 @@
 # 导出记录仪中的轨迹到KML/GPX文件
 
-将本项目部署到某虚拟主机上，可以是github.io静态展示页，访问index.html即可。
-
-> 在项目Release页面下载预编译好的dist静态网页
+在项目[Release页面](https://github.com/lixingcong/ddpai-mini5-gps-parser/releases)下载预编译好的dist静态网页，部署到虚拟主机（或者github.io静态网站），访问index.html即可
 
 # 使用方法
 
@@ -47,7 +45,7 @@ GPS轨迹原始数据源，可以是从记录仪中直接获取，也可以打�
 - 设置盯盯拍停机时间超过一定时间阈值后，才分割成两条轨迹导出
 - 下载轨迹前，可以从小窗口预览记录仪的轨迹（含起点终点信息）
 - 合并轨迹下载（打包成zip文件）
-- 内置了GPX与KML文件格式相互转换，访问```convert.html```可批量转换多个轨迹文件
+- 内置了GPX与KML文件格式相互转换
 
 ## 截图
 
@@ -57,6 +55,8 @@ GPS轨迹原始数据源，可以是从记录仪中直接获取，也可以打�
 
 
 # 开发
+
+基于Vue3，重写相同功能的[旧项目](https://github.com/lixingcong/ddpai-mini5-web-client)，使用脚手架方便维护。
 
 ## 编译
 
