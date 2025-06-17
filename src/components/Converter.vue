@@ -77,7 +77,7 @@
 import HelpTip from "./HelpTip.vue"
 import TrackPreview from './TrackPreview.vue'
 import {type TrackPreviewProps, type ConvertProps }  from '../types/TrackPreview'
-import { nextTick, reactive, ref, watch } from "vue"
+import { computed, nextTick, reactive, ref, watch } from "vue"
 import { type Converted, MyFile } from "@/converter"
 import * as DF from '@/ddpai/date-format'
 import * as TRACK from '@/ddpai/track'
@@ -120,9 +120,10 @@ let fileProgress = ref(-2)
 let infoList = reactive({
     converted : 0,
     same: 0,
-    show: false
+    show: false,
+    timestampBegin: 0,
+    refreshCostTimeCounter: 0
 })
-let convertedCostTime = ref('')
 let showPreviewZipButton = ref(false)
 let trackPreviewProps:TrackPreviewProps[] = reactive([])
 
@@ -194,7 +195,7 @@ async function onClickedConvert()
 }
 
 function beginToExport(srcFiles:FileList){
-    const costTimestampBegin = DF.now();
+    infoList.timestampBegin = DF.now();
 
     g_fileCount.value = srcFiles.length
     g_files=[]
@@ -206,6 +207,7 @@ function beginToExport(srcFiles:FileList){
     clearErrors()
 
     // do work now!
+    infoList.show = true
     let promises:PromiseLike<any>[] = [];
     for(let i =0; i<g_fileCount.value; ++i){
         const f = srcFiles[i];
@@ -214,6 +216,12 @@ function beginToExport(srcFiles:FileList){
             return promiseConvertFormat(myFile, fileFormatSelected.value).then(myFile => {
                 g_files.push(myFile);
                 fileProgress.value = g_files.length / g_fileCount.value
+                ++infoList.refreshCostTimeCounter
+
+                if (myFile.keepSameFormat)
+                    ++infoList.same;
+                else
+                    ++infoList.converted;
             })
         }));
     }
@@ -231,18 +239,15 @@ function beginToExport(srcFiles:FileList){
         g_files.sort((a, b) => a.name.localeCompare(b.name)); // 按文件名排序
 
         if(g_files.length > 0){
-            const zipHint = '转换'+fileFormatSelected.value+'合辑_'+DF.timestampToString(costTimestampBegin / 1000, 'YYYYMMDD-HHmmss', false);
+            const zipHint = '转换'+fileFormatSelected.value+'合辑_'+DF.timestampToString(DF.now() / 1000, 'YYYYMMDD-HHmmss', false);
             const zip = new JSZip();
             const zipFolder = zip.folder(zipHint)!;
 
             g_files.forEach(myFile => {
                 myFile.converted.forEach(c => { zipFolder.file(c.name, c.content!); });
-
-                if (myFile.keepSameFormat)
-                    ++infoList.same;
-                else
-                    ++infoList.converted;
             });
+
+            const onZipProgress = () => { ++ infoList.refreshCostTimeCounter }
 
             zip.generateAsync({
                 compression: "DEFLATE",
@@ -250,24 +255,23 @@ function beginToExport(srcFiles:FileList){
                 type: "blob",
                 platform: "DOS",
                 mimeType: 'application/zip'
-            }).then((zipBlob) => {
+            },onZipProgress).then((zipBlob) => {
                 // done
-                // TODO: 采用DownloadLink组件
                 const dl:TrackDownload = {
                     text:zipHint+'.zip',
                     href:URL.createObjectURL(zipBlob),
                     sizeHint:UTILS.byteToHumanReadableSize(zipBlob.size)
                 }
                 trackDownloadLinks.push(dl)
-
+            }).finally(()=>{
                 fileProgress.value=1;
                 showPreviewZipButton.value = true
-                convertedCostTime.value = UTILS.millisecondToHumanReadableString(DF.now() - costTimestampBegin)
+                ++infoList.refreshCostTimeCounter
             })
         } else {
             appendError('Zip文件内容为空')
             fileProgress.value=1;
-            convertedCostTime.value = UTILS.millisecondToHumanReadableString(DF.now() - costTimestampBegin)
+            ++infoList.refreshCostTimeCounter
         }
 	});
 }
@@ -313,6 +317,15 @@ function listAllFiles(){
         });
     });
 }
+
+const convertedCostTime = computed(():string => {
+    if(infoList.timestampBegin && infoList.refreshCostTimeCounter>0){
+        const n = DF.now()
+        if(n>infoList.timestampBegin)
+            return UTILS.millisecondToHumanReadableString(n - infoList.timestampBegin)
+    }
+    return ''
+})
 
 // ---- promise 1 ----
 type ReadFileResolve = (myFile:MyFile) => void
