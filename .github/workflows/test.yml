@@ -1,0 +1,28 @@
+name: Test
+on:
+  push
+permissions:
+  contents: read
+jobs:
+  build-and-test:
+    concurrency: ci-${{ github.ref }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install apt packages
+        run: |
+          sudo apt install libgd-dev -y
+          echo "Server datetime: $(date)"
+
+      - name: Setup Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Build and Test
+        run: |
+          npm install
+          npm run build
+          npm run test

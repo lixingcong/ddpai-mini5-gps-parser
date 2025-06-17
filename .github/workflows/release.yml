@@ -1,13 +1,11 @@
-name: Build and Deploy
+name: Release
 on:
-  push:
-    tags:
-      - 'ci*'
-      - 'v[0-9]+*'
+  release:
+    types: [published]
 permissions:
   contents: write
 jobs:
-  build-and-deploy:
+  build-and-release:
     concurrency: ci-${{ github.ref }}
     runs-on: ubuntu-22.04
     steps:
@@ -36,7 +34,7 @@ jobs:
       - name: Install and Build
         run: |
           npm install
-          npm run build
+          npm run build-only
           npm run test
           tar -cvzf dist.tar.gz dist
 
