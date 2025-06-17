@@ -11,11 +11,11 @@ npm install
 # 开发模式
 npm run dev
 
-# 编译打包
+# 编译打包 输出到dist目录
 npm run build
 
 # 单元测试
-npm run test:unit
+npm run test
 ```
 
 # 依赖包
