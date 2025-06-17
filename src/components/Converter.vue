@@ -36,7 +36,7 @@
                 <label><input type="checkbox" v-model="trackFileHookCodeEnabled"></input>对TrackFile进行后处理</label>
                 <HelpTip text="构建TrackFile对象，对轨迹进行后处理，如将路径坐标偏移，或者移除高度信息，需要对本项目源码熟悉"></HelpTip>
                 <a target="_blank"
-                    href="https://github.com/lixingcong/ddpai-mini5-web-client/blob/master/trackfile-hook-sample.js">参考源码</a>
+                    href="https://github.com/lixingcong/ddpai-mini5-gps-parser/blob/master/src/ddpai/tests/trackfile-hook-sample.js">参考源码</a>
             </div>
             <textarea v-model="trackFileHookCode" v-show="trackFileHookCodeEnabled" rows="12" cols="0"></textarea>
         </details>
@@ -96,6 +96,7 @@ window.trackFileHook = function(trackFile){
    if (wp.altitude) wp.altitude += X;
  }
 
+ // TrackFile的定义，参考src/ddpai/track.ts的构造函数
  trackFile.points.forEach(point => { offset(point.wayPoint); });
  trackFile.lines.forEach(path => { path.wayPoints.forEach(offset); });
  trackFile.tracks.forEach(path => { path.wayPoints.forEach(offset); });
@@ -379,9 +380,17 @@ const promiseConvertFormat = (myFile:MyFile, destFormat:string) => new Promise(f
         return; // No need for convert
     }
 
-    let newTrackFiles = [myFile.trackFile];
-    if(trackFileHookCodeEnabled.value && (window as any).trackFileHook)
-        newTrackFiles = (window as any).trackFileHook(myFile.trackFile);
+    let newTrackFiles:TRACK.TrackFile[] = []
+    if(trackFileHookCodeEnabled.value && (window as any).trackFileHook){
+        const jsConverted:any[] = (window as any).trackFileHook(myFile.trackFile);
+        newTrackFiles=jsConverted.map(converted => {
+            const t = new TRACK.TrackFile(undefined)
+            Object.assign(t, converted) // 使用javascript转换的结果，需要手动合并各个属性，再扔回typescript处理
+            return t
+        })
+    }else{
+        newTrackFiles.push(myFile.trackFile) // 不使用hook
+    }
 
     if(0 == newTrackFiles.length){
         reject(new Error('Removed by hook: ' + SrcName));
