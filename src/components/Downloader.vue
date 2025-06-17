@@ -65,12 +65,6 @@
                     <input type="range" v-model="thresholdSliderValue" :min="thresholdSliderRange[0]" :max="thresholdSliderRange[1]" />
                 </span>
             </div>
-
-            <div>
-                <template v-for="w in otherWebsites">
-                    <span class="btn-spacer"><a target="_blank" :href="w.value">{{ w.text }}</a></span>
-                </template>
-            </div>
         </details>
 
 		<div v-show="zipDownloadProps.blob">
@@ -156,11 +150,6 @@ const fileFormatSelected=ref('kml')
 const fileFormatOptions = [
     { text: '导出KML', value: 'kml' },
     { text: '导出GPX', value: 'gpx' }
-]
-const otherWebsites = [
-    {text:'源码', value:'https://github.com/lixingcong/ddpai-mini5-web-client'},
-    {text:'CORS扩展', value:'https://mybrowseraddon.com/access-control-allow-origin.html'},
-    {text:'Google Earth', value:'https://earth.google.com/web'}
 ]
 
 const CanvasDefaultWidth = 64
