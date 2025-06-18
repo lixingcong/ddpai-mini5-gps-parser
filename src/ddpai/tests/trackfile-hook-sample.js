@@ -11,13 +11,14 @@ export {
     sampleBetweenTime,
     convertTrackToLine,
     sortByName,
+    removeIfContainTrack,
     splitAllPaths
 };
 
 /**
  * 时间加上固定偏移，一般用于时区校正
  */
-function timeShift(trackFile) {
+const timeShift = function(trackFile) {
     const OffsetHour = -4; // 向前调整4小时
     const OffsetSecond = OffsetHour * 3600;
     const Offset = wp => { if(undefined != wp.timestamp) wp.timestamp += OffsetSecond; }
@@ -32,7 +33,7 @@ function timeShift(trackFile) {
 /**
  * 搜索坐标海拔为0的点，并将其海拔置为空白（去除噪声数据）
  */
-function clearInvalidAltitude(trackFile) {
+const clearInvalidAltitude = function(trackFile) {
     const Clear = wp => { if (0 == wp.altitude) wp.altitude = undefined; }
 
     trackFile.points.forEach(point => { Clear(point.wayPoint); });
@@ -74,7 +75,7 @@ function clearInvalidAltitude(trackFile) {
  *   <![CDATA[<div>时间：2020-10-18 06:14:26</div>]]>
  * </description>
  */
-function fixDescription(trackFile) {
+const fixDescription = function(trackFile) {
     // 匹配<tagName>开头和</tagName>结尾
     const Regex = /^\<[a-zA-z0-9]*?\>.*\<\/[a-zA-z0-9]*?\>$/;
     const Check = o => {
@@ -97,7 +98,7 @@ function fixDescription(trackFile) {
 /**
  * 移除轨迹文件中的点、线、轨迹
  */
-function removeAll(trackFile) {
+const removeAll = function(trackFile) {
     trackFile.points = [];
     trackFile.lines = [];
     trackFile.tracks = [];
@@ -110,7 +111,7 @@ function removeAll(trackFile) {
  * 将位移距离小于10米的点位剔除，只保留位移大于10米的点
  * 注意：首尾两点不会被移除
  */
-function sampleByDistance(trackFile) {
+const sampleByDistance = function(trackFile) {
     const MinDistance = 10;
     const Check = path => {
         let lastWayPoint = undefined;
@@ -139,7 +140,7 @@ function sampleByDistance(trackFile) {
  * 对轨迹抽样，精简轨迹（按固定时间间隔）
  * 注意：首尾两点不会被移除
  */
-function sampleByTimeInterval(trackFile) {
+const sampleByTimeInterval = function(trackFile) {
     const Interval = 2; // 每2秒取样
     const Check = path => {
         let lastWayPoint = undefined;
@@ -167,7 +168,7 @@ function sampleByTimeInterval(trackFile) {
  * 对轨迹抽样，精简轨迹（按固定间隔点数）
  * 注意：首尾两点不会被移除
  */
-function sampleByIndexInterval(trackFile) {
+const sampleByIndexInterval = function(trackFile) {
     const Interval = 3; // 每3个点取样
     const Check = path => {
         let lastIndex = undefined;
@@ -195,7 +196,7 @@ function sampleByIndexInterval(trackFile) {
 /**
  * 对轨迹抽样，精简轨迹（取出某段时间内的轨迹）
  */
-function sampleBetweenTime(trackFile) {
+const sampleBetweenTime = function(trackFile) {
     const T  = s => Date.parse(s) / 1000;
     const T1 = T('2024-02-16T04:30:00+08:00');
     const T2 = T('2024-02-16T06:00:00+08:00');
@@ -213,7 +214,7 @@ function sampleBetweenTime(trackFile) {
 /**
  * 将轨迹转为不含时间信息的路径
  */
-function convertTrackToLine(trackFile) {
+const convertTrackToLine = function(trackFile) {
     // 这里只做简单的判断是否轨迹重叠：起点是否为同一个点（2米内）
     const MinDistance = 2;
 
@@ -239,7 +240,7 @@ function convertTrackToLine(trackFile) {
 /**
  * 按名字排序，不改变文件内容，只改排序
  */
-function sortByName(trackFile) {
+const sortByName = function(trackFile) {
     const cmp = (a, b) => a.name.localeCompare(b.name);
     trackFile.points.sort(cmp);
     trackFile.tracks.sort(cmp);
@@ -248,19 +249,29 @@ function sortByName(trackFile) {
 }
 
 /**
- * 将轨迹以json形式输出到浏览器下载栏，可以提供给其它编程语言进行进一步处理
+ * 将轨迹以json形式输出到页面body底部，可以提供给其它编程语言进行进一步处理
  */
-function downloadAsJson(trackFile) {
-    const filename = '导出'+trackFile.name+'.json'
-    const newLink = $('<a>', {
-        text: filename,
-        download: filename,
-        href: URL.createObjectURL(new Blob([JSON.stringify(trackFile, null, 2)]))
-    });
+const downloadAsJson = function(trackFile) {
+    // 文件名包含冒号，在Windows下不合法
+    const trackFilename = trackFile.name ? trackFile.name.replaceAll(':','') : 'track';
+    const filename = '导出'+trackFilename+'.json'
 
-    const div =  $('#exportedTrackList');
-    div.append(newLink);
-    div.append('<br/>');
+    const downloadLink = document.createElement("a");
+    downloadLink.innerText = filename;
+    downloadLink.setAttribute('download', filename);
+    downloadLink.setAttribute('href', URL.createObjectURL(new Blob([JSON.stringify(trackFile, null, 2)])));
+
+    const className = 'exportJsonHook';
+
+    // 可以在F12控制台中，手动敲命令：移除旧的下载链接
+    // const oldElements = document.getElementsByClassName(className);
+    // for (let i = 0; i < oldElements.length; i++) oldElements[i].remove();
+
+    const div = document.createElement("div");
+    div.setAttribute('class', className)
+
+    div.append(downloadLink);
+    document.body.appendChild(div);
 
     return [trackFile];
 }
@@ -268,9 +279,9 @@ function downloadAsJson(trackFile) {
 /**
  * 移除那些包含轨迹的文件
  */
-function removeIfContainTrack(trackFile) {
-    if(trackFile.track.length > 0)
-        return false;
+const removeIfContainTrack = function(trackFile) {
+    if(trackFile.tracks.length > 0)
+        return [];
     return [trackFile];
 }
 
@@ -278,7 +289,7 @@ function removeIfContainTrack(trackFile) {
  * 分拆所有轨迹、线条
  * 也就是将一个kml文件拆成多个kml文件，每个kml只有一个轨迹
  */
-function splitAllPaths(trackFile) {
+const splitAllPaths = function(trackFile) {
     let ret =[];
 
     const Split = (path, isLine) => {
