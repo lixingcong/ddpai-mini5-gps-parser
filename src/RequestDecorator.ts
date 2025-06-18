@@ -1,6 +1,6 @@
 "use strict"
 
-export { RequestDecorator };
+export { RequestDecorator }
 
 // https://github.com/chenjigeng/requestDecorator/blob/master/src/RequestDecorator.js
 
@@ -24,39 +24,39 @@ class RequestDecorator implements RequestDecoratorParam {
   currentConcurrent: number
 
   constructor(maxLimit: number, requestApi: any) {
-    this.maxLimit = maxLimit;
-    this.requestQueue = [];
-    this.currentConcurrent = 0;
-    this.requestApi = requestApi;
+    this.maxLimit = maxLimit
+    this.requestQueue = []
+    this.currentConcurrent = 0
+    this.requestApi = requestApi
   }
 
   async request(...args: any[]) {
     if (this.currentConcurrent >= this.maxLimit) {
-      await this.startBlocking();
+      await this.startBlocking()
     }
 
     try {
-      this.currentConcurrent++;
-      const result = await this.requestApi(...args);
-      return Promise.resolve(result);
+      this.currentConcurrent++
+      const result = await this.requestApi(...args)
+      return Promise.resolve(result)
     } catch (err) {
-      return Promise.reject(err);
+      return Promise.reject(err)
     } finally {
-      this.currentConcurrent--;
-      this.next();
+      this.currentConcurrent--
+      this.next()
     }
   }
 
   startBlocking() {
     let _resolve: PromiseResolveCallback
-    let promise2 = new Promise((resolve, reject) => _resolve = resolve);
-    this.requestQueue.push(_resolve!);
-    return promise2;
+    let promise2 = new Promise((resolve, reject) => _resolve = resolve)
+    this.requestQueue.push(_resolve!)
+    return promise2
   }
 
   next() {
-    if (this.requestQueue.length <= 0) return;
-    const _resolve = this.requestQueue.shift();
+    if (this.requestQueue.length <= 0) return
+    const _resolve = this.requestQueue.shift()
     if (_resolve)
       _resolve(undefined)
   }

@@ -1,18 +1,18 @@
 // 将数字（单位：米）转成字符串
 function meterToString(meter:number):string {
 	if (meter > 1000)
-		return (meter / 1000).toFixed(1) + 'km';
-	return Math.trunc(meter) + 'm';
+		return (meter / 1000).toFixed(1) + 'km'
+	return Math.trunc(meter) + 'm'
 }
 
 // 返回十进制整数的数字位数，如123返回3
 function intWidth(num:number):number{
-    let ret = 0;
+    let ret = 0
     do{
-        num = Math.trunc(num / 10);
-        ++ret;
-    } while(num > 0);
-    return ret;
+        num = Math.trunc(num / 10)
+        ++ret
+    } while(num > 0)
+    return ret
 }
 
 /**
@@ -27,56 +27,56 @@ function intWidth(num:number):number{
  */
 function scaleToIndex(inputVal:number, inputMinVal:number, inputMaxVal:number, base:number, baseMinX:number):number {
 	if (inputVal <= inputMinVal)
-		return 0;
+		return 0
 	if (inputVal >= inputMaxVal)
-		return 1;
+		return 1
 
 	inputVal -= inputMinVal; // 移到0
 	inputVal /= (inputMaxVal - inputMinVal); // [0,1]
 	inputVal -= 1; // [-1,0]
 	inputVal *= baseMinX; // [baseMinX,0]
-	return Math.pow(base, inputVal);
+	return Math.pow(base, inputVal)
 }
 
 // 秒转为'XX分'或者'XX时'
 function secondToHumanReadableString(second:number):string {
 	if (second < 60)
-		return second + 's';
+		return second + 's'
 	if (second < 3600)
-		return Math.trunc(second / 60) + 'm';
+		return Math.trunc(second / 60) + 'm'
 	if (second < 86400)
-		return (second / 3600).toFixed(1) + 'h';
-	return (second / 86400).toFixed(1) + 'd';
+		return (second / 3600).toFixed(1) + 'h'
+	return (second / 86400).toFixed(1) + 'd'
 }
 
 function millisecondToHumanReadableString(ms:number):string {
     if (ms < 1000)
-        return ms + 'ms';
-    return secondToHumanReadableString(parseFloat((ms / 1000).toFixed(1)));
+        return ms + 'ms'
+    return secondToHumanReadableString(parseFloat((ms / 1000).toFixed(1)))
 }
 
 // 字节转为'KB'或者'MB'
 function byteToHumanReadableSize(bytes:number):string {
-	const texts = ['B', 'K', 'M', 'G', 'T'];
-	if (0 == bytes) return '0B';
+	const texts = ['B', 'K', 'M', 'G', 'T']
+	if (0 == bytes) return '0B'
 	const level = Math.floor(Math.log(bytes) / Math.log(1024))
-    const num = bytes / Math.pow(1024, level);
-    const decimal = bytes < 1024 ? 0 : 1;
-	return num.toFixed(decimal) + texts[level];
+    const num = bytes / Math.pow(1024, level)
+    const decimal = bytes < 1024 ? 0 : 1
+	return num.toFixed(decimal) + texts[level]
 }
 
 function isObjectEmpty(obj:any):boolean{
 	// https://stackoverflow.com/questions/679915/how-do-i-test-for-an-empty-javascript-object
 	for(let i in obj)
-		return false;
-	return true;
+		return false
+	return true
 }
 
 // 给数字加上前缀0，返回字符串
 function zeroPad(num:number, fixedLength:number):string {
     // add leading zero to integer number
-    var zero = fixedLength - num.toString().length + 1;
-    return Array(+(zero > 0 && zero)).join("0") + num;
+    var zero = fixedLength - num.toString().length + 1
+    return Array(+(zero > 0 && zero)).join("0") + num
 }
 
 // 输入升序一维数组，输出按相邻元素的差值的阈值分割的二维数组
@@ -84,27 +84,27 @@ function zeroPad(num:number, fixedLength:number):string {
 function splitOrderedNumbersByThreshold(numbers:number[], threshold:number):number[][]
 {
     if (threshold < 1)  // 小于1表示不分割
-        return [numbers];
+        return [numbers]
 
-    let ret:number[][] = [];
-    let lastNumber = Number.MIN_SAFE_INTEGER;
-    let lastGroup = undefined;
+    let ret:number[][] = []
+    let lastNumber = Number.MIN_SAFE_INTEGER
+    let lastGroup = undefined
 
     numbers.forEach(number => {
         if (number - lastNumber > threshold) {
-            lastGroup = new Array();
-            ret.push(lastGroup);
+            lastGroup = new Array()
+            ret.push(lastGroup)
         }
-        lastGroup.push(number);
-        lastNumber = number;
-    });
+        lastGroup.push(number)
+        lastNumber = number
+    })
 
-    return ret;
-};
+    return ret
+}
 
 function randomString(len:number):string
 {
-    return [...Array(len)].map(() => Math.random().toString(36)[2]).join('');
+    return [...Array(len)].map(() => Math.random().toString(36)[2]).join('')
 }
 
 export {
@@ -118,4 +118,4 @@ export {
     zeroPad,
 	splitOrderedNumbersByThreshold,
     randomString
-};
+}

@@ -23,11 +23,11 @@
 </template>
 
 <script setup lang="ts" name="TrackPreview">
-import { newCanvasDiv } from '@/canvasdraw';
-import { computed, nextTick, ref } from 'vue';
-import { type TrackPreviewProps } from '@/types/TrackPreview';
+import { newCanvasDiv } from '@/canvasdraw'
+import { computed, nextTick, ref } from 'vue'
+import { type TrackPreviewProps } from '@/types/TrackPreview'
 import * as UTILS from '@/ddpai/utils'
-import DownloadLink from './DownloadLink.vue';
+import DownloadLink from './DownloadLink.vue'
 
 let canvas = ref()
 
@@ -54,10 +54,10 @@ const downloadedHint = computed(():string => {
     if(d){
         let t = d.prefix
         if(d.duration > 0){
-            t += '耗时' + UTILS.secondToHumanReadableString(d.duration);
-            t += '，直线' + UTILS.meterToString(d.lineDistance);
+            t += '耗时' + UTILS.secondToHumanReadableString(d.duration)
+            t += '，直线' + UTILS.meterToString(d.lineDistance)
             if (d.realDistance > 0)
-                t += '，里程' + UTILS.meterToString(d.realDistance);
+                t += '，里程' + UTILS.meterToString(d.realDistance)
         }
         return t
     }

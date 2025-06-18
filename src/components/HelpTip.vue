@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts" name="HelpTip">
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 const props = defineProps<{text:string}>()
 const content = computed(()=>{

@@ -11,7 +11,7 @@
         </div>
 
         <div v-show="gpsFileGroups.length > 0">
-			<GPSFileTable @selectedGpsFileIdxes="setSelectedGpsFileIdxes" :groups="gpsFileGroups" :gpsFiles="g_gpsFileListReq" :serverHostUrl="serverHostUrl"></GPSFileTable>
+			<GPSFileTable @selectedGpsFileIdxes="setSelectedGpsFileIdxes" :groups="gpsFileGroups" :gpsFiles="gpsFiles" :serverHostUrl="serverHostUrl"></GPSFileTable>
 		</div>
 
         <div class="btn-container">
@@ -97,17 +97,14 @@
 
 <script setup lang="ts" name="Downloader">
 import { computed, reactive, ref, nextTick } from 'vue'
-import { parseTar } from 'tarparser';
+import { parseTar } from 'tarparser'
 import HelpTip from './HelpTip.vue'
-import GPSFileTable from './GPSFileTable.vue';
+import GPSFileTable from './GPSFileTable.vue'
 import * as UTILS from '@/ddpai/utils'
 import * as DF from '@/ddpai/date-format'
 import * as TRACK from '@/ddpai/track'
-import * as TRACK_I from '@/ddpai/types/track'
 import * as WP from '@/ddpai/waypoint'
-import { type WayPointIntf } from "@/ddpai/types/waypoint";
-import * as KML from '@/ddpai/kml'
-import * as GPX from '@/ddpai/gpx'
+import { type WayPointIntf } from "@/ddpai/types/waypoint"
 import * as DDPAI from '@/ddpai/ddpai'
 import * as DDPAI_I from '@/ddpai/types/ddpai'
 import * as RD from '@/RequestDecorator'
@@ -116,28 +113,28 @@ import TrackPreview from './TrackPreview.vue'
 import DownloadLink from './DownloadLink.vue'
 import {type TrackPreviewProps }  from '../types/TrackPreview'
 import {type DownloadLinkProps }  from '../types/DownloadLink'
-import { type GPSFileGroup } from '@/types/GPSFileTable';
+import { type GPSFileGroup } from '@/types/GPSFileTable'
 import JSZip from 'jszip'
 
-let hideContent = ref(false)
-let enableTrack = ref(true)
-let enableLine = ref(false)
-let enableTwoPoint = ref(true)
-let enableBeautify = ref(false)
-let thresholdSliderValue = ref(230)
-let fileInput = ref()
-let errorList:string[] = reactive([])
-let fileProgress = ref(-2)
-let infoList = ref()
-let trackPreviewProps:TrackPreviewProps[] = reactive([])
+const hideContent = ref(false)
+const enableTrack = ref(true)
+const enableLine = ref(false)
+const enableTwoPoint = ref(true)
+const enableBeautify = ref(false)
+const thresholdSliderValue = ref(230)
+const fileInput = ref()
+const errorList:string[] = reactive([])
+const fileProgress = ref(-2)
+const infoList = ref()
+const trackPreviewProps:TrackPreviewProps[] = reactive([])
 const zipDownloadProps:DownloadLinkProps = reactive({})
 const singleFileDownloadProps:DownloadLinkProps = reactive({})
 const gpsFileGroups:GPSFileGroup[] = reactive([])
-let selectedGpsFileIdxes:number[] = [] // 待下载gpx/git文件的数组索引，对应g_gpsFileListReq数组下标
 
-let g_gpxPreprocessContents:{ [key: string]: string[] } = {} // 字典，为json中的startTime到gpx原文件内容的映射（只保留GPGGA和GPRMC行）
-let g_timestampToWayPoints:{[key: number]: WayPointIntf} = {} // 字典，为timestamp到WayPoint对象的映射
-const g_gpsFileListReq:DDPAI_I.GPSFile[] = reactive([]) // 数组，HTTP链接，每个gpx/git的直链
+let selectedGpsFileIdxes:number[] = [] // 待下载gpx/git文件的数组索引，对应gpsFiles数组下标
+let gpxPreprocessContents:{ [key: string]: string[] } = {} // 字典，为json中的startTime到gpx原文件内容的映射（只保留GPGGA和GPRMC行）
+let timestampToWayPoints:{[key: number]: WayPointIntf} = {} // 字典，为timestamp到WayPoint对象的映射
+const gpsFiles:DDPAI_I.GPSFile[] = reactive([]) // 数组，HTTP链接，每个gpx/git的直链
 
 const HtmlTableFormat = 'MM-DD HH:mm'; // HTML网页中的日期格式
 const WayPointDescriptionFormat = 'YYYYMMDD HH:mm'; // 描述一个点的注释日期格式
@@ -156,70 +153,70 @@ const CanvasDefaultWidth = 64
 const CanvasDefaultHeight = 42
 
 function isMobileUserAgent():boolean {
-	return /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+	return /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 }
 
 function isFilenameGpxGit(filename:string):boolean {
-	return filename.search(/\d{14}_\d{4}(_D|_T)?\.g(px|it)/i) >= 0;
+	return filename.search(/\d{14}_\d{4}(_D|_T)?\.g(px|it)/i) >= 0
 }
 
 function fileNameTsFromTo(a:number, b:number):string {
 	const TrackFileNameFormat = 'YYYYMMDD-HHmm'; // 文件名日期格式，不能含特殊字符，如冒号
-	const from = DF.timestampToString(a, TrackFileNameFormat, false);
-	const to = DF.timestampToString(b, TrackFileNameFormat, false);
+	const from = DF.timestampToString(a, TrackFileNameFormat, false)
+	const to = DF.timestampToString(b, TrackFileNameFormat, false)
 	if(from.substring(0,8) == to.substring(0,8)) // same date
-		return from + '到' + to.substring(9);
-	return from + '到' + to;
+		return from + '到' + to.substring(9)
+	return from + '到' + to
 }
 
 function descriptionTsFromTo(a:number, b:number):string {
-	const from = DF.timestampToString(a, WayPointDescriptionFormat, false);
-	const to = DF.timestampToString(b, WayPointDescriptionFormat, false);
+	const from = DF.timestampToString(a, WayPointDescriptionFormat, false)
+	const to = DF.timestampToString(b, WayPointDescriptionFormat, false)
 	if(from.substring(0,8) == to.substring(0,8)) // same date
-		return from + '~' + to.substring(9);
-	return from + '~' + to;
+		return from + '~' + to.substring(9)
+	return from + '~' + to
 }
 
 function simpleTimestampToString(a:number, b:number):string {
-	const from = DF.timestampToString(a, HtmlTableFormat, false);
-	const to = DF.timestampToString(b, HtmlTableFormat, false);
+	const from = DF.timestampToString(a, HtmlTableFormat, false)
+	const to = DF.timestampToString(b, HtmlTableFormat, false)
 	if(from.substring(0,5) == to.substring(0,5)) // same date
-		return from + '~' + to.substring(6);
-	return from + '~' + to;
+		return from + '~' + to.substring(6)
+	return from + '~' + to
 }
 
 async function getFromHttpServer(){
 	clearDownloads()
 	clearErrors()
-	g_gpsFileListReq.length = 0
+	gpsFiles.length = 0
 	gpsFileGroups.length = 0
 	await nextTick()
 
 	promiseHttpGetAjax(urlAPIGpsFileListReq, true).then(response => {
 		const newGpsFileListReq = DDPAI.API_GpsFileListReqToArray(response as string)
-		Object.assign(g_gpsFileListReq, newGpsFileListReq)
+		Object.assign(gpsFiles, newGpsFileListReq)
 
-		if (g_gpsFileListReq.length > 0) {
+		if (gpsFiles.length > 0) {
 			const groupGpsFileListReq = () => {
-				let grouped:{[key:string]: number[]} = {};
-				g_gpsFileListReq.forEach((gpsFile, idx) => {
-					let fromDateStr = DF.timestampToString(gpsFile.from, 'MM-DD', false);
+				let grouped:{[key:string]: number[]} = {}
+				gpsFiles.forEach((gpsFile, idx) => {
+					let fromDateStr = DF.timestampToString(gpsFile.from, 'MM-DD', false)
 					if (!(fromDateStr in grouped))
-						grouped[fromDateStr] = [];
-					grouped[fromDateStr].push(idx);
-				});
-				return grouped;
+						grouped[fromDateStr] = []
+					grouped[fromDateStr].push(idx)
+				})
+				return grouped
 			}
 
-			const grouped = groupGpsFileListReq();
+			const grouped = groupGpsFileListReq()
 			const groupedKeys = Object.keys(grouped).sort((a, b) => { return a.localeCompare(b); }); // oldest date first
 
 			groupedKeys.forEach(k => {
 				const sortedIdxes = grouped[k].sort((a, b) => {
-					const ta = g_gpsFileListReq[a].from;
-					const tb = g_gpsFileListReq[b].from;
+					const ta = gpsFiles[a].from
+					const tb = gpsFiles[b].from
 					return ta - tb; // oldest date first
-				});
+				})
 
 				gpsFileGroups.push({
 					name: k,
@@ -228,21 +225,21 @@ async function getFromHttpServer(){
 			})
 		}
 	}, rejectedReason => {
-		appendError(rejectedReason);
-	});
+		appendError(rejectedReason)
+	})
 }
 
 function exportToTrack(singleFile:boolean){
-    const costTimestampBegin = DF.now();
-	const timestamps = Object.keys(g_timestampToWayPoints).map(Number).sort(); // 按时间排序
+    const costTimestampBegin = DF.now()
+	const timestamps = Object.keys(timestampToWayPoints).map(Number).sort(); // 按时间排序
 
 	clearDownloads()
 
 	if (timestamps.length > 0) {
 		// 按时间差分阈值分割完毕的结果
-		let timestampsGrouped = UTILS.splitOrderedNumbersByThreshold(timestamps, thresholdSecond.value);
+		let timestampsGrouped = UTILS.splitOrderedNumbersByThreshold(timestamps, thresholdSecond.value)
 
-		const zip = new JSZip();
+		const zip = new JSZip()
 
 		const ExportFormat = fileFormatSelected.value
 		const EnableTrack = enableTrack.value
@@ -251,58 +248,58 @@ function exportToTrack(singleFile:boolean){
 		const EnableBeautify = enableBeautify.value
 
 		const appendWayPointsToTrackFile = (trackFile:TRACK.TrackFile, wayPoints:WayPointIntf[], wayPointFrom:WayPointIntf, wayPointTo:WayPointIntf, distance:number, readableIdx:string|undefined) => {
-			const DistanceStr = ' ' + UTILS.meterToString(distance);
+			const DistanceStr = ' ' + UTILS.meterToString(distance)
 
-			let pathSuffix = descriptionTsFromTo(wayPointFrom.timestamp!, wayPointTo.timestamp!) + DistanceStr;
-			let startSuffix = DF.timestampToString(wayPointFrom.timestamp!, WayPointDescriptionFormat, false);
-			let endSuffix = DF.timestampToString(wayPointTo.timestamp!, WayPointDescriptionFormat, false);
+			let pathSuffix = descriptionTsFromTo(wayPointFrom.timestamp!, wayPointTo.timestamp!) + DistanceStr
+			let startSuffix = DF.timestampToString(wayPointFrom.timestamp!, WayPointDescriptionFormat, false)
+			let endSuffix = DF.timestampToString(wayPointTo.timestamp!, WayPointDescriptionFormat, false)
 
 			if(undefined!=readableIdx){
-				const Prefix = readableIdx + ': ';
-				pathSuffix = Prefix + pathSuffix;
-				startSuffix = Prefix + startSuffix;
-				endSuffix = Prefix + endSuffix;
+				const Prefix = readableIdx + ': '
+				pathSuffix = Prefix + pathSuffix
+				startSuffix = Prefix + startSuffix
+				endSuffix = Prefix + endSuffix
 			}
 
 			if(EnablePoint){
-				trackFile.points.push(new TRACK.Point('Start ' + startSuffix, wayPointFrom, undefined));
-				trackFile.points.push(new TRACK.Point('End ' + endSuffix, wayPointTo, undefined));
+				trackFile.points.push(new TRACK.Point('Start ' + startSuffix, wayPointFrom, undefined))
+				trackFile.points.push(new TRACK.Point('End ' + endSuffix, wayPointTo, undefined))
 			}
 
 			if(EnableRoute)
-				trackFile.lines.push(new TRACK.Path('Route '+ pathSuffix, wayPoints, undefined));
+				trackFile.lines.push(new TRACK.Path('Route '+ pathSuffix, wayPoints, undefined))
 
 			if(EnableTrack)
-				trackFile.tracks.push(new TRACK.Path('Track '+pathSuffix, wayPoints, undefined));
+				trackFile.tracks.push(new TRACK.Path('Track '+pathSuffix, wayPoints, undefined))
 		}
 
 		const trackFileToContent = (trackFile:TRACK.TrackFile, fmt:string) => {
 			if('kml' == fmt)
-				return trackFile.toKMLDocument().toFile(EnableBeautify);
+				return trackFile.toKMLDocument().toFile(EnableBeautify)
 			if('gpx' == fmt)
-				return trackFile.toGPXDocument().toFile(EnableBeautify);
-			return undefined;
+				return trackFile.toGPXDocument().toFile(EnableBeautify)
+			return undefined
 		}
 
-		let g_tsFrom = Number.MAX_SAFE_INTEGER;
-		let g_tsTo = Number.MIN_SAFE_INTEGER;
+		let tsFrom = Number.MAX_SAFE_INTEGER
+		let tsTo = Number.MIN_SAFE_INTEGER
 
 		if (singleFile) {
 			// singleFile = true表示单个文件，内含N条轨迹
 
-			const ZeroPadLength = UTILS.intWidth(timestampsGrouped.length);
-			const trackFile = new TRACK.TrackFile(undefined);
+			const ZeroPadLength = UTILS.intWidth(timestampsGrouped.length)
+			const trackFile = new TRACK.TrackFile(undefined)
 
 			timestampsGrouped.forEach((timestamps, idx) => {
-				const WayPoints = timestamps.map(ts => g_timestampToWayPoints[ts]);
-				const WayDistance = WP.wayDistance(WayPoints);
-				const WayPointFrom = WayPoints[0];
-				const WayPointTo = WayPoints[WayPoints.length-1];
+				const WayPoints = timestamps.map(ts => timestampToWayPoints[ts])
+				const WayDistance = WP.wayDistance(WayPoints)
+				const WayPointFrom = WayPoints[0]
+				const WayPointTo = WayPoints[WayPoints.length-1]
 				const ReadableIdx = UTILS.zeroPad(idx + 1, ZeroPadLength); // 2 -> '00000000002'
 
-				const HintPrefix = '轨迹' + ReadableIdx + '，' + simpleTimestampToString(WayPointFrom.timestamp!, WayPointTo.timestamp!)+ '，';
+				const HintPrefix = '轨迹' + ReadableIdx + '，' + simpleTimestampToString(WayPointFrom.timestamp!, WayPointTo.timestamp!)+ '，'
 
-				const paths = [new TRACK.Path(undefined, WayPoints,undefined)];
+				const paths = [new TRACK.Path(undefined, WayPoints,undefined)]
 
 				const props:TrackPreviewProps ={
 					paintResult:TRACK.paint(paths, CanvasDefaultWidth, CanvasDefaultHeight)!,
@@ -319,45 +316,44 @@ function exportToTrack(singleFile:boolean){
 
 				trackPreviewProps.push(props)
 
-				appendWayPointsToTrackFile(trackFile, WayPoints, WayPointFrom, WayPointTo, WayDistance, ReadableIdx);
+				appendWayPointsToTrackFile(trackFile, WayPoints, WayPointFrom, WayPointTo, WayDistance, ReadableIdx)
 
-				if (g_tsFrom > WayPointFrom.timestamp!)
-					g_tsFrom = WayPointFrom.timestamp as number;
-				if (g_tsTo < WayPointTo.timestamp!)
-					g_tsTo = WayPointTo.timestamp as number;
-			});
+				if (tsFrom > WayPointFrom.timestamp!)
+					tsFrom = WayPointFrom.timestamp as number
+				if (tsTo < WayPointTo.timestamp!)
+					tsTo = WayPointTo.timestamp as number
+			})
 
-			const Filename = fileNameTsFromTo(g_tsFrom, g_tsTo) + '共' + timestampsGrouped.length + '条.' + ExportFormat;
-			trackFile.name = descriptionTsFromTo(g_tsFrom, g_tsTo) + '共' + timestampsGrouped.length + '条';
-			const TrackContent = trackFileToContent(trackFile, ExportFormat)!;
+			const Filename = fileNameTsFromTo(tsFrom, tsTo) + '共' + timestampsGrouped.length + '条.' + ExportFormat
+			trackFile.name = descriptionTsFromTo(tsFrom, tsTo) + '共' + timestampsGrouped.length + '条'
+			const TrackContent = trackFileToContent(trackFile, ExportFormat)!
 			singleFileDownloadProps.blob = new Blob([TrackContent])
 			singleFileDownloadProps.filename = Filename
-			zip.file(Filename, TrackContent);
+			zip.file(Filename, TrackContent)
 		} else {
 			// singleFile = false表示每个文件只含1条轨迹
 			timestampsGrouped.forEach(timestamps => {
-				const WayPoints = timestamps.map(ts => g_timestampToWayPoints[ts]);
-				const WayDistance = WP.wayDistance(WayPoints);
-				const WayPointFrom = WayPoints[0];
-				const WayPointTo = WayPoints[WayPoints.length-1];
+				const WayPoints = timestamps.map(ts => timestampToWayPoints[ts])
+				const WayDistance = WP.wayDistance(WayPoints)
+				const WayPointFrom = WayPoints[0]
+				const WayPointTo = WayPoints[WayPoints.length-1]
 
-				if (g_tsFrom > WayPointFrom.timestamp!)
-					g_tsFrom = WayPointFrom.timestamp as number;
-				if (g_tsTo < WayPointTo.timestamp!)
-					g_tsTo = WayPointTo.timestamp as number;
+				if (tsFrom > WayPointFrom.timestamp!)
+					tsFrom = WayPointFrom.timestamp as number
+				if (tsTo < WayPointTo.timestamp!)
+					tsTo = WayPointTo.timestamp as number
 
-				let trackFile = new TRACK.TrackFile(undefined);
+				let trackFile = new TRACK.TrackFile(undefined)
 				appendWayPointsToTrackFile(trackFile, WayPoints, WayPointFrom, WayPointTo, WayDistance, undefined)
 
-				const TsFrom = WayPointFrom.timestamp!;
-				const TsTo = WayPointTo.timestamp!;
-				const Filename = fileNameTsFromTo(TsFrom, TsTo) + '.' + ExportFormat;
-				const FileDesciption = descriptionTsFromTo(TsFrom, TsTo);
-				trackFile.name = FileDesciption;
-				const TrackContent = trackFileToContent(trackFile, ExportFormat)!;
-				//divLink.append(TL.newHintDiv('', WayPointFrom, WayPointTo, WayDistance, false));
+				const TsFrom = WayPointFrom.timestamp!
+				const TsTo = WayPointTo.timestamp!
+				const Filename = fileNameTsFromTo(TsFrom, TsTo) + '.' + ExportFormat
+				const FileDesciption = descriptionTsFromTo(TsFrom, TsTo)
+				trackFile.name = FileDesciption
+				const TrackContent = trackFileToContent(trackFile, ExportFormat)!
 
-				const paths = trackFile.lines.concat(trackFile.tracks);
+				const paths = trackFile.lines.concat(trackFile.tracks)
 
 				const props:TrackPreviewProps ={
 					paintResult:TRACK.paint(paths, CanvasDefaultWidth, CanvasDefaultHeight)!,
@@ -377,8 +373,8 @@ function exportToTrack(singleFile:boolean){
 				}
 
 				trackPreviewProps.push(props)
-				zip.file(Filename, TrackContent);
-			});
+				zip.file(Filename, TrackContent)
+			})
 		}
 
 		// zip
@@ -389,48 +385,49 @@ function exportToTrack(singleFile:boolean){
 			platform: "DOS",
 			mimeType: 'application/zip'
 		}).then((zipBlob) => {
-			zipDownloadProps.filename='轨迹合辑_'+fileNameTsFromTo(g_tsFrom,g_tsTo)+'.zip'
+			zipDownloadProps.filename='轨迹合辑_'+fileNameTsFromTo(tsFrom,tsTo)+'.zip'
 			zipDownloadProps.blob = zipBlob
-			infoList.value.innerHTML= ('导出轨迹完成，耗时 ' + UTILS.millisecondToHumanReadableString(DF.now() - costTimestampBegin));
+			infoList.value.innerHTML= ('导出轨迹完成，耗时 ' + UTILS.millisecondToHumanReadableString(DF.now() - costTimestampBegin))
 		})
 	} else {
-		infoList.value.innerHTML= ('轨迹内容为空白，耗时 ' + UTILS.millisecondToHumanReadableString(DF.now() - costTimestampBegin));
+		infoList.value.innerHTML= ('轨迹内容为空白，耗时 ' + UTILS.millisecondToHumanReadableString(DF.now() - costTimestampBegin))
 	}
 }
 
 const thresholdSecond = computed((): number => {
 	const ratio = UTILS.scaleToIndex(thresholdSliderValue.value, thresholdSliderRange[0], thresholdSliderRange[1], Math.E, 5); // [0,1]
-	return Math.abs(Math.trunc(ratio * 86400));
-});
+	return Math.abs(Math.trunc(ratio * 86400))
+})
 
 const thresholdSliderHint = computed((): string => {
 	if(thresholdSecond.value < 1)
         return '不分割'
     return UTILS.secondToHumanReadableString(thresholdSecond.value)
-});
+})
 
 function refreshDownloadProgress(costTime:number = -1) {
-	const finshedText = (costTime >= 0 ? '，已下载完毕（耗时' + UTILS.millisecondToHumanReadableString(costTime) + '）' : '');
-	const pointTitle = (costTime >= 0 ? '原始点位数：' : '预处理：');
-	const pointCount = (costTime >= 0 ? Object.keys(g_timestampToWayPoints).length : Object.keys(g_gpxPreprocessContents).length);
+	const finshedText = (costTime >= 0 ? '，已下载完毕（耗时' + UTILS.millisecondToHumanReadableString(costTime) + '）' : '')
+	const pointTitle = (costTime >= 0 ? '原始点位数：' : '预处理：')
+	const pointCount = (costTime >= 0 ? Object.keys(timestampToWayPoints).length : Object.keys(gpxPreprocessContents).length)
     infoList.value.innerHTML= pointTitle + pointCount + finshedText + '<br/>'
 }
 
 function useHttpFiles(){
+	clearErrors()
+
     if(selectedGpsFileIdxes.length < 1){
         appendError('从记录仪获取后，请至少在表格中勾选一行')
-        return;
+        return
     }
 
-	const costTimestampBegin = DF.now();
+	const costTimestampBegin = DF.now()
 	fileProgress.value = -1
-	clearErrors();
 
-	let promises:PromiseLike<any>[] = [];
+	let promises:PromiseLike<any>[] = []
 	const httpGetDecorator = new RD.RequestDecorator(4, promiseHttpGetAjax)
 
 	selectedGpsFileIdxes.forEach(gpsFileIdx => {
-		const gpsFile = g_gpsFileListReq[gpsFileIdx]
+		const gpsFile = gpsFiles[gpsFileIdx]
 		gpsFile.filename.forEach(filename => {
 			const url = serverHostUrl.value + filename
 			promises.push(httpGetDecorator.request(url, false).then(
@@ -442,31 +439,33 @@ function useHttpFiles(){
 	Promise.allSettled(promises).then(function (results) {
 		results.forEach(r => {
 			if (r.status === 'rejected') {
-				appendError(r.reason);
+				appendError(r.reason)
 			}
-		});
+		})
 
-		mergePreprocessed();
+		mergePreprocessed()
 		fileProgress.value = -2
-		refreshDownloadProgress(DF.now() - costTimestampBegin);
-	});
+		refreshDownloadProgress(DF.now() - costTimestampBegin)
+	})
 }
 
 function useLocalFiles(){
-	const srcFiles = (fileInput.value as HTMLInputElement).files;
+	clearErrors()
+
+	const srcFiles = (fileInput.value as HTMLInputElement).files
     if(!srcFiles || srcFiles.length < 1){
         appendError('请至少上传一个文件')
-        return;
+        return
     }
 
-	const costTimestampBegin = DF.now();
+	const costTimestampBegin = DF.now()
 
 	// 处理上传的文件
 	fileProgress.value = -1
-	let promises:PromiseLike<any>[] = [];
+	let promises:PromiseLike<any>[] = []
 	for(let i =0; i<srcFiles.length; ++i){
-		let f = srcFiles[i];
-		let filename = f.name;
+		let f = srcFiles[i]
+		let filename = f.name
 		if (isFilenameGpxGit(filename))
 			promises.push(parseGitAndGpxFromBlob(filename, f))
 		else
@@ -478,22 +477,22 @@ function useLocalFiles(){
 			if (r.status === 'rejected') {
 				errorList.push(r.reason)
 			}
-		});
+		})
 
-		mergePreprocessed();
+		mergePreprocessed()
 		fileProgress.value = -2
-		refreshDownloadProgress(DF.now() - costTimestampBegin);
-	});
+		refreshDownloadProgress(DF.now() - costTimestampBegin)
+	})
 }
 
 function mergePreprocessed(){
 	// merge all preprocess gpx file content into a single dict
-	let gpxPreprocessTimestamps = Object.keys(g_gpxPreprocessContents);
-	gpxPreprocessTimestamps.sort();
-	let concated:string[] = [];
-	gpxPreprocessTimestamps.forEach(ts => { concated = concated.concat(g_gpxPreprocessContents[ts]); });
-	g_timestampToWayPoints = DDPAI.gpxToWayPointDict(concated);
-	g_gpxPreprocessContents = {}; // clean up
+	let gpxPreprocessTimestamps = Object.keys(gpxPreprocessContents)
+	gpxPreprocessTimestamps.sort()
+	let concated:string[] = []
+	gpxPreprocessTimestamps.forEach(ts => { concated = concated.concat(gpxPreprocessContents[ts]); })
+	timestampToWayPoints = DDPAI.gpxToWayPointDict(concated)
+	gpxPreprocessContents = {}; // clean up
 }
 
 function appendError(s:string){
@@ -520,15 +519,15 @@ function setSelectedGpsFileIdxes(idxes: number[]){
 type ReadBlobResolve = (content: string | ArrayBuffer | null) => void
 function promiseReadBlob(blob:Blob, isText:boolean) {
 	return new Promise(function (resolve:ReadBlobResolve, reject) {
-		let reader = new FileReader();
-		reader.onload = function () { resolve(reader.result); };
-		reader.onerror = reject;
-		reader.onabort = reject;
+		let reader = new FileReader()
+		reader.onload = function () { resolve(reader.result); }
+		reader.onerror = reject
+		reader.onabort = reject
 		if (isText)
-			reader.readAsText(blob);
+			reader.readAsText(blob)
 		else
-			reader.readAsArrayBuffer(blob);
-	});
+			reader.readAsArrayBuffer(blob)
+	})
 }
 
 function promiseReadGpx(filename:string, blob:Blob) {
@@ -536,12 +535,12 @@ function promiseReadGpx(filename:string, blob:Blob) {
         if(!textData)
             return Promise.reject('read gpx with null')
 
-		const p = DDPAI.preprocessRawGpxFile(textData as string, 160, '\n');
+		const p = DDPAI.preprocessRawGpxFile(textData as string, 160, '\n')
 		if(!UTILS.isObjectEmpty(p))
-			g_gpxPreprocessContents[p.startTime] = p.content;
-		refreshDownloadProgress();
-		return Promise.resolve();
-	});
+			gpxPreprocessContents[p.startTime] = p.content
+		refreshDownloadProgress()
+		return Promise.resolve()
+	})
 }
 
 const promiseReadGit = async (filename:string, blob:Blob) => {
@@ -552,7 +551,7 @@ const promiseReadGit = async (filename:string, blob:Blob) => {
 		type:string|number
 		text:string
 	}
-	const entries:Entry[] = await promiseReadBlob(blob, false).then(c => parseTar(c as ArrayBuffer));
+	const entries:Entry[] = await promiseReadBlob(blob, false).then(c => parseTar(c as ArrayBuffer))
 
 	if (entries.length > 0) {
 		const readGpxFromEntry = (e:Entry) => {
@@ -560,64 +559,64 @@ const promiseReadGit = async (filename:string, blob:Blob) => {
 			if ('file' == e.type) {
 				const entryData = e.text
 				if (entryData)
-					return promiseReadGpx(entryFilename, new Blob([entryData]));
+					return promiseReadGpx(entryFilename, new Blob([entryData]))
 				else
-					return Promise.reject(new Error('Entrydata is null: ' + entryFilename));
+					return Promise.reject(new Error('Entrydata is null: ' + entryFilename))
 			} else {
-				return Promise.reject(new Error(entryFilename+ ' is not a file in ' + filename));
+				return Promise.reject(new Error(entryFilename+ ' is not a file in ' + filename))
 			}
 		}
 
-		let promises:PromiseLike<any>[] = [];
+		let promises:PromiseLike<any>[] = []
 		if (isMobileUserAgent()) {
 			const readFileDecorator = new RD.RequestDecorator(4, readGpxFromEntry)
-			promises = entries.map(e => readFileDecorator.request(e));
+			promises = entries.map(e => readFileDecorator.request(e))
 		} else
-			promises = entries.map(e => readGpxFromEntry(e));
+			promises = entries.map(e => readGpxFromEntry(e))
 
 		return Promise.allSettled(promises).then(results => {
 			results.forEach(r => {
 				if (r.status === 'rejected') {
-					appendError(r.reason);
+					appendError(r.reason)
 				}
-			});
-			return Promise.resolve();
-		});
+			})
+			return Promise.resolve()
+		})
 
 	} // end of if(entries)
 
-	return Promise.reject(new Error('Can not open archive: ' + filename));
+	return Promise.reject(new Error('Can not open archive: ' + filename))
 }
 
 type HttpGetAjaxResolve = (content:string|Blob) => void
 function promiseHttpGetAjax(url:string, isText:boolean) {
 	return new Promise(function (resolve:HttpGetAjaxResolve, reject) {
-		let xhr = new XMLHttpRequest();
-		xhr.responseType = isText ? 'text' : 'blob';
-		xhr.timeout = 2000;
-		xhr.open('GET', url, true);
-		xhr.send();
+		let xhr = new XMLHttpRequest()
+		xhr.responseType = isText ? 'text' : 'blob'
+		xhr.timeout = 2000
+		xhr.open('GET', url, true)
+		xhr.send()
 		xhr.onreadystatechange = function () {
 			if (this.readyState === 4) {
 				if (this.status === 200){
 					if(isText)
-						resolve(this.response as string);
+						resolve(this.response as string)
 					else
 						resolve(this.response as Blob)
 				}else
-					reject(new Error('(' + xhr.status + ') ' + url));
+					reject(new Error('(' + xhr.status + ') ' + url))
 			}
 		}
-	});
+	})
 }
 
 const parseGitAndGpxFromBlob = (filename:string, blob:Blob) => {
 	if (filename.endsWith('git'))
-		return promiseReadGit(filename, blob);
+		return promiseReadGit(filename, blob)
 	else if (filename.endsWith('gpx'))
-		return promiseReadGpx(filename, blob);
-	return Promise.reject(new Error('Filename suffix is neither gpx nor git: ' + filename));
-};
+		return promiseReadGpx(filename, blob)
+	return Promise.reject(new Error('Filename suffix is neither gpx nor git: ' + filename))
+}
 // ---- promise 2 ----
 
 </script>

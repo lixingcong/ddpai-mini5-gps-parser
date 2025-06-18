@@ -1,51 +1,51 @@
-import * as fs from 'fs';
-import * as crypto from 'crypto';
+import * as fs from 'fs'
+import * as crypto from 'crypto'
 
 export {
     writeFile,
     readFile,
     isObjectEqual,
     md5sum
-};
+}
 
-type WriteFileDoneCallback = (content: string) => void;
+type WriteFileDoneCallback = (content: string) => void
 
 const writeFile = (path:string, content:string, callback:WriteFileDoneCallback|undefined) => {
     fs.writeFile(path, content, error => {
-        let s = 'writeFile(' + path + '): ';
+        let s = 'writeFile(' + path + '): '
 
         if(error)
-            s += 'Error: ' + error;
+            s += 'Error: ' + error
         else
-            s += 'OK';
+            s += 'OK'
 
-        console.log(s);
+        console.log(s)
 
         if(!error && undefined != callback)
-            callback(content);
-    });
-};
+            callback(content)
+    })
+}
 
-type ReadFileDoneCallback = (content:string) => void;
+type ReadFileDoneCallback = (content:string) => void
 
 const readFile = (path:string, callback:ReadFileDoneCallback|undefined) => {
     fs.readFile(path, 'utf-8', (error, content) =>{
-        let s = 'readFile(' + path + '): ';
+        let s = 'readFile(' + path + '): '
 
         if(error)
-            s += 'Error: ' + error;
+            s += 'Error: ' + error
         else
-            s += 'OK';
+            s += 'OK'
 
-        console.log(s);
+        console.log(s)
 
         if(!error && undefined != callback)
-            callback(content);
-    });
-};
+            callback(content)
+    })
+}
 
 const isObjectEqual = (a:object|undefined, b:object|undefined) => {
-    return JSON.stringify(a) === JSON.stringify(b);
-};
+    return JSON.stringify(a) === JSON.stringify(b)
+}
 
-const md5sum = (str:string) => crypto.createHash('md5').update(str).digest('hex');
+const md5sum = (str:string) => crypto.createHash('md5').update(str).digest('hex')

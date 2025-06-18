@@ -52,10 +52,10 @@
 </template>
 
 <script setup lang="ts" name="GPSFileTable">
-import { computed, reactive, toRefs, watch } from 'vue';
-import { type GPSFileGroup } from '@/types/GPSFileTable';
+import { computed, reactive, toRefs, watch } from 'vue'
+import { type GPSFileGroup } from '@/types/GPSFileTable'
 import * as DDPAI_I from '@/ddpai/types/ddpai'
-import HelpTip from './HelpTip.vue';
+import HelpTip from './HelpTip.vue'
 import * as DF from '@/ddpai/date-format'
 import * as UTILS from '@/ddpai/utils'
 import useClipboard from 'vue-clipboard3'
@@ -120,7 +120,7 @@ const rows=computed(():Row[] => {
         })
 
         rowOffset += group.gpsFileArrayIdxes.length
-    });
+    })
 
     //console.log('rows data:', ret)
     return ret
@@ -189,8 +189,8 @@ function onClickedCopyUrls(rowIdxes:number[]|undefined)
 
 // 返回 [起始字符 结束字符 是否同一天]
 function HtmlTableTimestampToString(a:number, b:number):[string, string, boolean] {
-	const from = DF.timestampToString(a, HtmlTableFormat, false);
-	const to = DF.timestampToString(b, HtmlTableFormat, false);
+	const from = DF.timestampToString(a, HtmlTableFormat, false)
+	const to = DF.timestampToString(b, HtmlTableFormat, false)
 	if(from.substring(0,5) == to.substring(0,5)) // same date
 		return [from.substring(6), to.substring(6), true]
 	return [from, to, false]

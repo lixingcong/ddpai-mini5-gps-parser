@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts" name="ProgressBar">
-import { ref, toRef, watch } from 'vue';
+import { ref, toRef, watch } from 'vue'
 
 interface Prop{
     progress:number
@@ -25,7 +25,7 @@ watch(rawValue, (value: number) => {
         pb.value = value
     else if(value == -1)
         pb.removeAttribute('value')
-});
+})
 
 </script>
 

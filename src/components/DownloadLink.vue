@@ -3,9 +3,9 @@
 </template>
 
 <script setup lang="ts" name="DownloadLink">
-import { type DownloadLinkProps } from '@/types/DownloadLink';
+import { type DownloadLinkProps } from '@/types/DownloadLink'
 import * as UTILS from '@/ddpai/utils'
-import { computed, toRef } from 'vue';
+import { computed, toRef } from 'vue'
 
 const props = defineProps<DownloadLinkProps>()
 const rawFilename = toRef(props, 'filename')

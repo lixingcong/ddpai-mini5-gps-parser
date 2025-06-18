@@ -1,16 +1,18 @@
 <template>
     <div :class="hideContent ? 'card-title-hidden' : 'card-title'" @click="hideContent = !hideContent">轨迹文件转换</div>
     <div :class="hideContent ? 'card-content-hidden' : 'card-content'">
-        <div>
+        <div class="btn-container">
             <input type="file" ref="fileInput" name="files[]" multiple accept=".kml,.gpx" />
         </div>
 
-        <div>
-            <select v-model="fileFormatSelected">
-                <option v-for="option in fileFormatOptions" :value="option.value">
-                    {{ option.text }}
-                </option>
-            </select>
+        <div class="btn-container">
+            <span class="btn-spacer">
+                <select v-model="fileFormatSelected">
+                    <option v-for="option in fileFormatOptions" :value="option.value">
+                        {{ option.text }}
+                    </option>
+                </select>
+            </span>
 
             <span class="btn-spacer">
                 <button @click="onClickedConvert">执行转换</button>
@@ -62,12 +64,12 @@
             </TrackPreview>
         </div>
 		<div v-show="infoList.show">
-            源数目: {{ g_fileCount }}, 已转换: {{ infoList.converted }}, 无需转换: {{ infoList.same }}<br/>
+            源数目: {{ srcFileCount }}, 已转换: {{ infoList.converted }}, 无需转换: {{ infoList.same }}<br/>
             耗时{{ convertedCostTime }}
         </div>
-		<div v-show="g_errorList.length>0">
-			<div>错误信息（{{g_errorList.length}}条）</div>
-			<div v-for="(e,idx) in g_errorList" class="error">{{ idx+1 }}: {{ e }}</div>
+		<div v-show="errorList.length>0">
+			<div>错误信息（{{errorList.length}}条）</div>
+			<div v-for="(e,idx) in errorList" class="error">{{ idx+1 }}: {{ e }}</div>
 		</div>
         <component is="script" ref="scriptLoader" v-if="renderComponent"></component>
     </div>
@@ -76,9 +78,9 @@
 <script setup lang="ts" name="Converter">
 import HelpTip from "./HelpTip.vue"
 import TrackPreview from './TrackPreview.vue'
-import {type TrackPreviewProps, type ConvertProps }  from '../types/TrackPreview'
-import { computed, nextTick, reactive, ref, watch } from "vue"
-import { type Converted, MyFile } from "@/converter"
+import {type TrackPreviewProps }  from '../types/TrackPreview'
+import { computed, nextTick, reactive, ref } from "vue"
+import { MyFile } from "@/converter"
 import * as DF from '@/ddpai/date-format'
 import * as TRACK from '@/ddpai/track'
 import * as KML from '@/ddpai/kml'
@@ -106,31 +108,31 @@ window.trackFileHook = function(trackFile){
 }
 `
 
-let hideContent = ref(true)
-let trackFileHookCode = ref(trackFileHookCode_)
-let trackFileHookCodeEnabled = ref(false)
-let canvasWidth=ref(100)
-let canvasHeight=ref(70)
-let beautifyExport=ref(false)
-let convertSameFormat=ref(false)
-let fileInput = ref()
-let scriptLoader = ref()
-let renderComponent = ref(true)
-let fileProgress = ref(-2)
-let infoList = reactive({
+const hideContent = ref(true)
+const trackFileHookCode = ref(trackFileHookCode_)
+const trackFileHookCodeEnabled = ref(false)
+const canvasWidth=ref(100)
+const canvasHeight=ref(70)
+const beautifyExport=ref(false)
+const convertSameFormat=ref(false)
+const fileInput = ref()
+const scriptLoader = ref()
+const renderComponent = ref(true)
+const fileProgress = ref(-2)
+const infoList = reactive({
     converted : 0,
     same: 0,
     show: false,
     timestampBegin: 0,
     refreshCostTimeCounter: 0
 })
-let showPreviewZipButton = ref(false)
-let trackPreviewProps:TrackPreviewProps[] = reactive([])
+const showPreviewZipButton = ref(false)
+const trackPreviewProps:TrackPreviewProps[] = reactive([])
 
 // 来自js版的变量
-let g_errorList:string[] = reactive([])
-let g_fileCount = ref(0)
-let g_files:MyFile[] = []; // MyFile对象
+const errorList:string[] = reactive([])
+const srcFileCount = ref(0)
+let  myFiles:MyFile[] = []; // MyFile对象
 
 const fileFormatSelected=ref('kml')
 const fileFormatOptions = [
@@ -144,16 +146,14 @@ interface TrackDownload
     href:string
     sizeHint: string
 }
-let trackDownloadLinks:TrackDownload[] = reactive([])
+const trackDownloadLinks:TrackDownload[] = reactive([])
 
 async function onClickedConvert()
 {
-    // console.log(text)
-
-    const srcFiles = (fileInput.value as HTMLInputElement).files;
+    const srcFiles = (fileInput.value as HTMLInputElement).files
     if(!srcFiles || srcFiles.length < 1){
         appendError('请至少上传一个文件')
-        return;
+        return
     }
 
     if(trackFileHookCodeEnabled.value){
@@ -171,15 +171,15 @@ async function onClickedConvert()
 
         const waitHookToBeReady = async () => {
             // https://stackoverflow.com/a/53269990/5271632
-            const t1 = Date.now();
+            const t1 = Date.now()
             while (undefined == (window as any).trackFileHook) {
                 if(Date.now() - t1 > 500)
-                    return;
-                await new Promise(resolve => requestAnimationFrame(resolve));
+                    return
+                await new Promise(resolve => requestAnimationFrame(resolve))
             }
-        };
+        }
 
-        waitHookToBeReady().then(()=>{
+        await waitHookToBeReady().then(()=>{
             let f = (window as any).trackFileHook
             if(f){
                 // console.log('hook is loaded')
@@ -195,10 +195,10 @@ async function onClickedConvert()
 }
 
 function beginToExport(srcFiles:FileList){
-    infoList.timestampBegin = DF.now();
+    infoList.timestampBegin = DF.now()
 
-    g_fileCount.value = srcFiles.length
-    g_files=[]
+    srcFileCount.value = srcFiles.length
+    myFiles=[]
     fileProgress.value = 0
     trackDownloadLinks.length = 0
     trackPreviewProps.length = 0
@@ -208,22 +208,22 @@ function beginToExport(srcFiles:FileList){
 
     // do work now!
     infoList.show = true
-    let promises:PromiseLike<any>[] = [];
-    for(let i =0; i<g_fileCount.value; ++i){
-        const f = srcFiles[i];
+    let promises:PromiseLike<any>[] = []
+    for(let i =0; i<srcFileCount.value; ++i){
+        const f = srcFiles[i]
 
         promises.push(promiseReadFile(f).then(myFile => {
             return promiseConvertFormat(myFile, fileFormatSelected.value).then(myFile => {
-                g_files.push(myFile);
-                fileProgress.value = g_files.length / g_fileCount.value
+                myFiles.push(myFile)
+                fileProgress.value = myFiles.length / srcFileCount.value
                 ++infoList.refreshCostTimeCounter
 
                 if (myFile.keepSameFormat)
-                    ++infoList.same;
+                    ++infoList.same
                 else
-                    ++infoList.converted;
+                    ++infoList.converted
             })
-        }));
+        }))
     }
 
     Promise.allSettled(promises).then(function (results) {
@@ -231,21 +231,21 @@ function beginToExport(srcFiles:FileList){
 
 		results.forEach(r => {
 			if (r.status === 'rejected') {
-				appendError(r.reason);
+				appendError(r.reason)
 			}
-		});
+		})
 
-        g_files = g_files.filter(myFile => { return myFile && myFile.converted.length > 0; });
-        g_files.sort((a, b) => a.name.localeCompare(b.name)); // 按文件名排序
+        myFiles = myFiles.filter(myFile => { return myFile && myFile.converted.length > 0; })
+        myFiles.sort((a, b) => a.name.localeCompare(b.name)); // 按文件名排序
 
-        if(g_files.length > 0){
-            const zipHint = '转换'+fileFormatSelected.value+'合辑_'+DF.timestampToString(DF.now() / 1000, 'YYYYMMDD-HHmmss', false);
-            const zip = new JSZip();
-            const zipFolder = zip.folder(zipHint)!;
+        if(myFiles.length > 0){
+            const zipHint = '转换'+fileFormatSelected.value+'合辑_'+DF.timestampToString(DF.now() / 1000, 'YYYYMMDD-HHmmss', false)
+            const zip = new JSZip()
+            const zipFolder = zip.folder(zipHint)!
 
-            g_files.forEach(myFile => {
-                myFile.converted.forEach(c => { zipFolder.file(c.name, c.content!); });
-            });
+            myFiles.forEach(myFile => {
+                myFile.converted.forEach(c => { zipFolder.file(c.name, c.content!); })
+            })
 
             const onZipProgress = () => { ++ infoList.refreshCostTimeCounter }
 
@@ -264,24 +264,24 @@ function beginToExport(srcFiles:FileList){
                 }
                 trackDownloadLinks.push(dl)
             }).finally(()=>{
-                fileProgress.value=1;
+                fileProgress.value=1
                 showPreviewZipButton.value = true
                 ++infoList.refreshCostTimeCounter
             })
         } else {
             appendError('Zip文件内容为空')
-            fileProgress.value=1;
+            fileProgress.value=1
             ++infoList.refreshCostTimeCounter
         }
-	});
+	})
 }
 
 function appendError(s:string) {
-    g_errorList.push(s)
+    errorList.push(s)
 }
 
 function clearErrors() {
-    g_errorList.length=0
+    errorList.length=0
 }
 
 function clearInfos(){
@@ -291,10 +291,10 @@ function clearInfos(){
 
 function listAllFiles(){
     showPreviewZipButton.value = false
-    g_files.forEach((myFile) => {
+    myFiles.forEach((myFile) => {
         myFile.converted.forEach(c => {
-            const trackFile = c.trackFile!;
-            const paths = trackFile.lines.concat(trackFile.tracks);
+            const trackFile = c.trackFile!
+            const paths = trackFile.lines.concat(trackFile.tracks)
 
             const props:TrackPreviewProps ={
                 paintResult:TRACK.paint(paths, canvasWidth.value, canvasHeight.value)!,
@@ -314,8 +314,8 @@ function listAllFiles(){
             }
 
             trackPreviewProps.push(props)
-        });
-    });
+        })
+    })
 }
 
 const convertedCostTime = computed(():string => {
@@ -331,33 +331,33 @@ const convertedCostTime = computed(():string => {
 type ReadFileResolve = (myFile:MyFile) => void
 const promiseReadFile = (file:File) => new Promise(function (resolve:ReadFileResolve, reject) {
     // API: resolve(MyFile)
-    const reader = new FileReader();
+    const reader = new FileReader()
     reader.onload = () => {
-        let f = new MyFile(file.name);
-        f.content = reader.result as string;
-        resolve(f);
-    };
-    reader.onerror = reject;
-    reader.onabort = reject;
-    reader.readAsText(file);
-});
+        let f = new MyFile(file.name)
+        f.content = reader.result as string
+        resolve(f)
+    }
+    reader.onerror = reject
+    reader.onabort = reject
+    reader.readAsText(file)
+})
 
 type ConvertFormatResolve = (myFile:MyFile) => void
 const promiseConvertFormat = (myFile:MyFile, destFormat:string) => new Promise(function(resolve:ConvertFormatResolve, reject) {
     // API: resolve(MyFile)
-    const SrcName = myFile.name;
-    const SrcPrefixSuffix=myFile.parseName();
+    const SrcName = myFile.name
+    const SrcPrefixSuffix=myFile.parseName()
 
     if(undefined == SrcPrefixSuffix){
-        reject(new Error('Invalid file extension: ' + SrcName));
-        return;
+        reject(new Error('Invalid file extension: ' + SrcName))
+        return
     }
 
-    const SrcPrefix = SrcPrefixSuffix[0];
-    const SrcSuffix = SrcPrefixSuffix[1];
+    const SrcPrefix = SrcPrefixSuffix[0]
+    const SrcSuffix = SrcPrefixSuffix[1]
 
     type FormFile = (content:string) => TRACK.TrackFile|undefined
-    let fromFile:FormFile;
+    let fromFile:FormFile
 
     switch(SrcSuffix){
         case 'kml':
@@ -365,37 +365,37 @@ const promiseConvertFormat = (myFile:MyFile, destFormat:string) => new Promise(f
                 const kmlDoc = KML.Document.fromFile(c)
                 return kmlDoc ? TRACK.TrackFile.fromKMLDocument(kmlDoc) : undefined
             }
-            break;
+            break
         case 'gpx':
             fromFile = (c:string) => {
                 const gpxDoc = GPX.Document.fromFile(c)
                 return gpxDoc ? TRACK.TrackFile.fromGPXDocument(gpxDoc) : undefined
             }
-            break;
+            break
         default:
-            reject(new Error('Unsupport file extension: ' + SrcSuffix + ' of ' + SrcName));
-            return;
+            reject(new Error('Unsupport file extension: ' + SrcSuffix + ' of ' + SrcName))
+            return
     }
 
     if(myFile.content)
-        myFile.trackFile=fromFile(myFile.content);
+        myFile.trackFile=fromFile(myFile.content)
 
     if(undefined==myFile.trackFile){
-        reject(new Error('Failed to build TrackFile object: ' + SrcName));
-        return;
+        reject(new Error('Failed to build TrackFile object: ' + SrcName))
+        return
     }
 
     // skip if has same format
     if(!convertSameFormat.value && SrcSuffix == destFormat){
-        myFile.keepSameFormat = true;
-        myFile.converted=[{name:myFile.name, content:myFile.content, trackFile:myFile.trackFile}];
-        resolve(myFile);
+        myFile.keepSameFormat = true
+        myFile.converted=[{name:myFile.name, content:myFile.content, trackFile:myFile.trackFile}]
+        resolve(myFile)
         return; // No need for convert
     }
 
     let newTrackFiles:TRACK.TrackFile[] = []
     if(trackFileHookCodeEnabled.value && (window as any).trackFileHook){
-        const jsConverted:any[] = (window as any).trackFileHook(myFile.trackFile);
+        const jsConverted:any[] = (window as any).trackFileHook(myFile.trackFile)
         newTrackFiles=jsConverted.map(converted => {
             const t = new TRACK.TrackFile(undefined)
             Object.assign(t, converted) // 使用javascript转换的结果，需要手动合并各个属性，再扔回typescript处理
@@ -406,41 +406,41 @@ const promiseConvertFormat = (myFile:MyFile, destFormat:string) => new Promise(f
     }
 
     if(0 == newTrackFiles.length){
-        reject(new Error('Removed by hook: ' + SrcName));
-        return;
+        reject(new Error('Removed by hook: ' + SrcName))
+        return
     }
 
     type ToFile = (t:TRACK.TrackFile) => string
-    let toFile:ToFile;
+    let toFile:ToFile
 
     switch(destFormat){
         case 'kml':
-            toFile = (t:TRACK.TrackFile) => t.toKMLDocument().toFile(beautifyExport.value);
-            break;
+            toFile = (t:TRACK.TrackFile) => t.toKMLDocument().toFile(beautifyExport.value)
+            break
         case 'gpx':
-            toFile = (t:TRACK.TrackFile) => t.toGPXDocument().toFile(beautifyExport.value);
-            break;
+            toFile = (t:TRACK.TrackFile) => t.toGPXDocument().toFile(beautifyExport.value)
+            break
         default:
-            reject(new Error('Unsupport dest format: ' + destFormat));
-            return;
+            reject(new Error('Unsupport dest format: ' + destFormat))
+            return
     }
-    const NewContents = newTrackFiles.map(toFile);
-    const NewContentLength = NewContents.length;
-    const ZeroPadWidth = UTILS.intWidth(NewContentLength);
+    const NewContents = newTrackFiles.map(toFile)
+    const NewContentLength = NewContents.length
+    const ZeroPadWidth = UTILS.intWidth(NewContentLength)
 
     type NewFileNameFunc = (idx:number) => string
     let newFileNameFunc:NewFileNameFunc
     if(1==NewContentLength)
-        newFileNameFunc = idx => SrcPrefix+'.'+destFormat;
+        newFileNameFunc = idx => SrcPrefix+'.'+destFormat
     else
-        newFileNameFunc = idx => SrcPrefix + '_' + UTILS.zeroPad(idx+1, ZeroPadWidth) + '.' + destFormat;
+        newFileNameFunc = idx => SrcPrefix + '_' + UTILS.zeroPad(idx+1, ZeroPadWidth) + '.' + destFormat
 
     myFile.converted=NewContents.map((c,idx) => {
         return {name:newFileNameFunc(idx), content:c, trackFile:newTrackFiles[idx]}
-    });
+    })
 
-    resolve(myFile);
-});
+    resolve(myFile)
+})
 
 // ---- promise 2 ----
 

@@ -9,7 +9,7 @@ test('timestampToString', () => {
 })
 
 test('from/to RFC3339', () =>{
-    const ts = 1705564686;
+    const ts = 1705564686
     const rfc3339 = DF.toRfc3339(ts)
     expect(rfc3339).toBe('2024-01-18T07:58:06Z')
     expect(DF.fromRfc3339(rfc3339)).toBe(ts)

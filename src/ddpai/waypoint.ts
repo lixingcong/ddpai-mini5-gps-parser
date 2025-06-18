@@ -1,10 +1,10 @@
-import { type WayPointIntf } from "./types/waypoint";
+import { type WayPointIntf } from "./types/waypoint"
 
-const deg2rad = (d:number) => d * Math.PI / 180.0;
-const M_PI_4 = Math.PI / 4;
+const deg2rad = (d:number) => d * Math.PI / 180.0
+const M_PI_4 = Math.PI / 4
 
 // 地球半径
-const WGS84_RADIUS = 6378137;
+const WGS84_RADIUS = 6378137
 
 class WayPoint implements WayPointIntf {
     lat: number|undefined // 十进制纬度 latitude
@@ -22,10 +22,10 @@ class WayPoint implements WayPointIntf {
         timestamp: number|undefined = undefined,
         altitude: number|undefined = undefined)
     {
-        this.lat = lat;
-        this.lon = lon;
-        this.timestamp = timestamp;
-        this.altitude = altitude;
+        this.lat = lat
+        this.lon = lon
+        this.timestamp = timestamp
+        this.altitude = altitude
     }
 
     hasGeometry():boolean { return undefined !== this.lon && undefined !== this.lat;}
@@ -81,8 +81,8 @@ function wayDistance(wayPoints:WayPoint[], speedThreshold:number = 1.5, distance
 			distance += thisDistance
             lastWayPoint = wayPoint
 		}
-	});
-    return distance;
+	})
+    return distance
 }
 
 export {

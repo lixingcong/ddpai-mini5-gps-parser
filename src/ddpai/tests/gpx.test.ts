@@ -1,12 +1,12 @@
-import * as GPX from '../gpx';
+import * as GPX from '../gpx'
 import { expect, test } from 'vitest'
-import * as TEST_COMMON from './common';
+import * as TEST_COMMON from './common'
 
-const document = new GPX.Document('DocName');
+const document = new GPX.Document('DocName')
 
 if(1){
-    document.wpts.push(new GPX.Wpt('Point 1',22.8820573, 114.5768273, undefined, 123, undefined));
-    document.wpts.push(new GPX.Wpt('Point 2',22.8821573, 114.5769273, 567, undefined, undefined));
+    document.wpts.push(new GPX.Wpt('Point 1',22.8820573, 114.5768273, undefined, 123, undefined))
+    document.wpts.push(new GPX.Wpt('Point 2',22.8821573, 114.5769273, 567, undefined, undefined))
 }
 
 if(1){
@@ -15,14 +15,14 @@ if(1){
         new GPX.Wpt(undefined, 22.8821573, 114.5769273, 12, undefined, undefined),
         new GPX.Wpt(undefined, 22.8822573, 114.5770273, 13, undefined, undefined),
         new GPX.Wpt(undefined, 22.8823573, 114.5771273, 14, undefined, undefined)
-    ], undefined));
+    ], undefined))
 
     document.rtes.push(new GPX.Rte('Route 2', [
         new GPX.Wpt(undefined, 23.8825573, 114.5771273, undefined, undefined, undefined),
         new GPX.Wpt(undefined, 22.8826573, 114.5772273, undefined, undefined, undefined),
         new GPX.Wpt(undefined, 22.8827573, 114.5773273, undefined, undefined, undefined),
         new GPX.Wpt(undefined, 22.8828573, 114.5774273, undefined, undefined, undefined)
-    ], undefined));
+    ], undefined))
 }
 
 if(1){
@@ -40,8 +40,8 @@ if(1){
                 new GPX.Wpt(undefined, 22.785698, 114.1690094, undefined, 1252, undefined),
                 new GPX.Wpt(undefined, 22.785699, 114.1690103, 11, 1253, undefined)
             ])
-        ], undefined);
-        document.trks.push(trk);
+        ], undefined)
+        document.trks.push(trk)
     }
 
     {
@@ -52,17 +52,17 @@ if(1){
                 new GPX.Wpt(undefined, 22.785725, 114.1691096, undefined, 1236, undefined),
                 new GPX.Wpt(undefined, 22.785735, 114.1691106, undefined, 1237, undefined)
             ])
-        ], undefined);
-        document.trks.push(trk);
+        ], undefined)
+        document.trks.push(trk)
     }
 }
 
-const content = document.toFile(true);
-const documentFromContent = GPX.Document.fromFile(content);
+const content = document.toFile(true)
+const documentFromContent = GPX.Document.fromFile(content)
 
 test('GPX', () => {
     // write the OK result
-    TEST_COMMON.writeFile('/tmp/gpx2.gpx', content, undefined);
+    TEST_COMMON.writeFile('/tmp/gpx2.gpx', content, undefined)
 
     expect.soft(documentFromContent).toBeDefined()
 

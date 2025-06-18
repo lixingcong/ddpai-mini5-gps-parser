@@ -1,4 +1,4 @@
-import { type WayPointIntf } from "./waypoint";
+import { type WayPointIntf } from "./waypoint"
 
 type XY = [number, number]
 

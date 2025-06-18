@@ -1,4 +1,4 @@
-import * as UTILS from '../utils';
+import * as UTILS from '../utils'
 import { expect, test } from 'vitest'
 
 test.each([
@@ -75,7 +75,7 @@ test.each([
 })
 
 {
-    const timestamps  = [0,1,2,5,6,9,13,14,15,17,20,23,26,27,31,35,36];
+    const timestamps  = [0,1,2,5,6,9,13,14,15,17,20,23,26,27,31,35,36]
 
     test.each([
         [0, [timestamps]],

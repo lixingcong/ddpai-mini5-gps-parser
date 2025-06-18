@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
-import { execSync } from 'child_process';
+import { execSync } from 'child_process'
 import { type GitCommitInfo } from './src/types/GitCommitInfo'
 
 const gitCommitInfo:GitCommitInfo = {
@@ -13,7 +13,7 @@ const gitCommitInfo:GitCommitInfo = {
   commitTimestamp: 1000 * parseInt(execSync('git log -1 --format=%at').toString().trim()),
   //SHA_FULL:execSync('git rev-parse HEAD').toString().trim(),
   //COMMIT_MESSAGE:execSync('git show -s --format=%s').toString().trim()
-};
+}
 
 // https://vite.dev/config/
 export default defineConfig({

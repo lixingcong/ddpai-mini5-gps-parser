@@ -15,7 +15,7 @@
 
 <script setup lang="ts" name="About">
 import {type GitCommitInfo} from '@/types/GitCommitInfo'
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 const props = defineProps<{url:string}>()
 
@@ -30,16 +30,16 @@ const otherWebsites = [
 // 返回 [gitCommit, 提交日期]
 function version():[string,string] {
     if(!import.meta.env.PROD)
-        return ['dev', ''];
+        return ['dev', '']
 
-    const g = _GIT_COMMIT_INFO as GitCommitInfo;
-    const date = new Date(g.commitTimestamp);
+    const g = _GIT_COMMIT_INFO as GitCommitInfo
+    const date = new Date(g.commitTimestamp)
 
     // 年月日
-    const Y = date.getFullYear();
-    const M = "0" + (1 + date.getMonth());
-    const D = "0" + date.getDate();
-    var formattedTime = Y + M.substring(M.length - 2) + D.substring(D.length - 2);
+    const Y = date.getFullYear()
+    const M = "0" + (1 + date.getMonth())
+    const D = "0" + date.getDate()
+    var formattedTime = Y + M.substring(M.length - 2) + D.substring(D.length - 2)
 
     return [g.shortSHA, formattedTime]
 }

@@ -1,19 +1,19 @@
-import * as TRACK from '../track';
-import * as TRACK_I from '../types/track';
+import * as TRACK from '../track'
+import * as TRACK_I from '../types/track'
 import * as WP from '../waypoint'
 import { expect, test } from 'vitest'
-import * as TEST_COMMON from './common';
-import * as GD from 'node-gd';
+import * as TEST_COMMON from './common'
+import * as GD from 'node-gd'
 
-let track = new TRACK.TrackFile('DocName');
-track.description = "Doc description xxx";
+let track = new TRACK.TrackFile('DocName')
+track.description = "Doc description xxx"
 
 if(1){
     track.points = [
         new TRACK.Point('Point 1', new WP.WayPoint(22.1234, 114.1234, 10, 20), undefined),
         new TRACK.Point('Point 2', new WP.WayPoint(22.1235, 114.1235), undefined)
-    ];
-    track.points.forEach((p, idx) => {p.description='Point description '+(1+idx)});
+    ]
+    track.points.forEach((p, idx) => {p.description='Point description '+(1+idx)})
 }
 
 if(1){
@@ -28,12 +28,12 @@ if(1){
             new WP.WayPoint(22.1247, 114.1237),
             new WP.WayPoint(22.1248, 114.1238)
         ], undefined)
-    ];
-    track.lines.forEach((p, idx) => {p.description='Line description '+(1+idx)});
+    ]
+    track.lines.forEach((p, idx) => {p.description='Line description '+(1+idx)})
 }
 
 if(1){
-    let timestamp = 1705575812;
+    let timestamp = 1705575812
 
     track.tracks = [
         new TRACK.Path('Track 1', [
@@ -46,50 +46,50 @@ if(1){
             new WP.WayPoint(22.1247, 114.1237, timestamp++, 42),
             new WP.WayPoint(22.1248, 114.1238, timestamp++)
         ], undefined)
-    ];
-    track.tracks.forEach((p, idx) => {p.description='Track description '+(1+idx)});
+    ]
+    track.tracks.forEach((p, idx) => {p.description='Track description '+(1+idx)})
 }
 
 // 是否kml/gpx写到磁盘
 const NeedToWrite = false
 
 test('KML Track', () => {
-    const kmlDoc= track.toKMLDocument();
-    const kmlFileContent = kmlDoc.toFile(true);
+    const kmlDoc= track.toKMLDocument()
+    const kmlFileContent = kmlDoc.toFile(true)
 
     if(NeedToWrite)
-        TEST_COMMON.writeFile('/tmp/track-1.kml', kmlFileContent, undefined);
+        TEST_COMMON.writeFile('/tmp/track-1.kml', kmlFileContent, undefined)
 
-    const trackFromDoc = TRACK.TrackFile.fromKMLDocument(kmlDoc);
+    const trackFromDoc = TRACK.TrackFile.fromKMLDocument(kmlDoc)
     expect.soft(trackFromDoc).toBeDefined()
 
     if(trackFromDoc){
-        const trackToKmlContent = trackFromDoc.toKMLDocument().toFile(true);
-        const same = TEST_COMMON.md5sum(kmlFileContent) == TEST_COMMON.md5sum(trackToKmlContent);
+        const trackToKmlContent = trackFromDoc.toKMLDocument().toFile(true)
+        const same = TEST_COMMON.md5sum(kmlFileContent) == TEST_COMMON.md5sum(trackToKmlContent)
         expect.soft(same).toBeTruthy()
 
         if(NeedToWrite && !same)
-           TEST_COMMON.writeFile('/tmp/track-1-diff.kml', trackToKmlContent, undefined);
+           TEST_COMMON.writeFile('/tmp/track-1-diff.kml', trackToKmlContent, undefined)
     }
 })
 
 test('GPX Track', () => {
-    const gpxDoc= track.toGPXDocument();
-    const gpxFileContent = gpxDoc.toFile(true);
+    const gpxDoc= track.toGPXDocument()
+    const gpxFileContent = gpxDoc.toFile(true)
 
     if(NeedToWrite)
-        TEST_COMMON.writeFile('/tmp/track-1.gpx', gpxFileContent, undefined);
+        TEST_COMMON.writeFile('/tmp/track-1.gpx', gpxFileContent, undefined)
 
-    const trackFromDoc = TRACK.TrackFile.fromGPXDocument(gpxDoc);
+    const trackFromDoc = TRACK.TrackFile.fromGPXDocument(gpxDoc)
     expect.soft(trackFromDoc).toBeDefined()
 
     if(trackFromDoc){
-        const trackToGpxContent = trackFromDoc.toGPXDocument().toFile(true);
-        const same = TEST_COMMON.md5sum(gpxFileContent) == TEST_COMMON.md5sum(trackToGpxContent);
+        const trackToGpxContent = trackFromDoc.toGPXDocument().toFile(true)
+        const same = TEST_COMMON.md5sum(gpxFileContent) == TEST_COMMON.md5sum(trackToGpxContent)
         expect.soft(same).toBeTruthy()
 
         if(NeedToWrite && !same)
-           TEST_COMMON.writeFile('/tmp/track-1-diff.gpx', trackToGpxContent, undefined);
+           TEST_COMMON.writeFile('/tmp/track-1-diff.gpx', trackToGpxContent, undefined)
     }
 })
 
@@ -98,36 +98,36 @@ test('GPX Track', () => {
 // ---------------------------------------------------
 
 async function paint(paintResult:TRACK_I.PaintResult, jpgWidth:number, jpgHeight:number){
-    const filename = '/tmp/track-preview-'+jpgWidth+'x'+jpgHeight+'.png';
+    const filename = '/tmp/track-preview-'+jpgWidth+'x'+jpgHeight+'.png'
 
     // 打印实际距离
-    //const actualDistance = 'distance w='+paintResult.horizontalDistance.toFixed(1)+', h='+paintResult.verticalDistance.toFixed(1);
-    //console.log(filename+', '+actualDistance);
+    //const actualDistance = 'distance w='+paintResult.horizontalDistance.toFixed(1)+', h='+paintResult.verticalDistance.toFixed(1)
+    //console.log(filename+', '+actualDistance)
 
-    let pathPoints:TRACK_I.PaintPoint[];
-    let pathPointsArray:TRACK_I.PaintPoint[][] = [];
+    let pathPoints:TRACK_I.PaintPoint[]
+    let pathPointsArray:TRACK_I.PaintPoint[][] = []
     paintResult.points.forEach(paintPoint => {
         if(paintPoint.cmd == TRACK_I.PaintCmd.TrackStart)
-            pathPoints=[];
+            pathPoints=[]
 
-        pathPoints.push(paintPoint);
+        pathPoints.push(paintPoint)
 
         if(paintPoint.cmd == TRACK_I.PaintCmd.TrackEnd)
-            pathPointsArray.push(pathPoints);
-    });
+            pathPointsArray.push(pathPoints)
+    })
 
-    const img = await GD.createTrueColor(jpgWidth, jpgHeight);
+    const img = await GD.createTrueColor(jpgWidth, jpgHeight)
 
-    img.fill(0, 0, 0xb0b0b0);
+    img.fill(0, 0, 0xb0b0b0)
 
-    const penWidth = Math.ceil(Math.min(jpgWidth,jpgHeight)/200);
-    img.setThickness(penWidth);
+    const penWidth = Math.ceil(Math.min(jpgWidth,jpgHeight)/200)
+    img.setThickness(penWidth)
 
     // paint rect
-    const rectColor = img.colorAllocate(16,199,165);
+    const rectColor = img.colorAllocate(16,199,165)
     img.rectangle(paintResult.topLeft![0], paintResult.topLeft![1],
         paintResult.bottomRight![0], paintResult.bottomRight![1],
-        rectColor);
+        rectColor)
 
     const pathColor=[
         0x000000,
@@ -137,10 +137,10 @@ async function paint(paintResult:TRACK_I.PaintResult, jpgWidth:number, jpgHeight
         0xf0803c,
         0xedf060,
         0x225560
-    ];
-    pathPointsArray.forEach( (pts,idx) => {img.openPolygon(pts, pathColor[idx % pathColor.length]);});
-    await img.savePng(filename, 1);
-    img.destroy();
+    ]
+    pathPointsArray.forEach( (pts,idx) => {img.openPolygon(pts, pathColor[idx % pathColor.length]);})
+    await img.savePng(filename, 1)
+    img.destroy()
 }
 
 const paintPaths = [
@@ -173,7 +173,7 @@ const paintPaths = [
         new WP.WayPoint(48.7229241, -3.97572779),
         new WP.WayPoint(48.7230278, -3.97556016)
     ],undefined)
-];
+]
 
 await test.each([
     [20,20],
@@ -187,10 +187,10 @@ await test.each([
     [1000,500],
     [1000,1000]
 ])('Track paint(), w=%d, h=%d', (jpgWidth, jpgHeight) => {
-    const paintResult = TRACK.paint(paintPaths, jpgWidth, jpgHeight);
+    const paintResult = TRACK.paint(paintPaths, jpgWidth, jpgHeight)
 
     expect.soft(paintResult).toBeDefined()
 
     if(paintResult)
-        paint(paintResult, jpgWidth, jpgHeight);
+        paint(paintResult, jpgWidth, jpgHeight)
 })

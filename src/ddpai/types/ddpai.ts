@@ -4,7 +4,7 @@ import { type WayPointIntf } from "./waypoint"
 type Interval=[number, number]
 
 // 时间戳映射到点位
-type TimeToWaypoint = { [key: number]: WayPointIntf };
+type TimeToWaypoint = { [key: number]: WayPointIntf }
 
 // 合并好的间隔
 interface MergedIntervals
