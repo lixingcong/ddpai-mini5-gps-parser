@@ -3,7 +3,8 @@ import * as TRACK_I from '../types/track'
 import * as WP from '../waypoint'
 import { expect, test } from 'vitest'
 import * as TEST_COMMON from './common'
-import * as GD from 'node-gd'
+import * as PImage from "pureimage";
+import * as fs from "fs";
 
 let track = new TRACK.TrackFile('DocName')
 track.description = "Doc description xxx"
@@ -116,31 +117,51 @@ async function paint(paintResult:TRACK_I.PaintResult, jpgWidth:number, jpgHeight
             pathPointsArray.push(pathPoints)
     })
 
-    const img = await GD.createTrueColor(jpgWidth, jpgHeight)
+    const img = await PImage.make(jpgWidth, jpgHeight)
+    const ctx = img.getContext("2d")
 
-    img.fill(0, 0, 0xb0b0b0)
+    ctx.fillStyle = 'gray'
+    ctx.fillRect(0, 0, jpgWidth, jpgHeight)
 
     const penWidth = Math.ceil(Math.min(jpgWidth,jpgHeight)/200)
-    img.setThickness(penWidth)
+    ctx.lineWidth = penWidth
 
     // paint rect
-    const rectColor = img.colorAllocate(16,199,165)
-    img.rectangle(paintResult.topLeft![0], paintResult.topLeft![1],
-        paintResult.bottomRight![0], paintResult.bottomRight![1],
-        rectColor)
+    {
+        ctx.strokeStyle  = '#10C7A5'
+        const [x1,y1,x2,y2] = [paintResult.topLeft![0], paintResult.topLeft![1],paintResult.bottomRight![0], paintResult.bottomRight![1]]
+        ctx.beginPath()
+        ctx.moveTo(x1,y1) // top left
+        ctx.lineTo(x2,y1) // top right
+        ctx.lineTo(x2,y2) // bottom right
+        ctx.lineTo(x1,y2) // bottom left
+        ctx.lineTo(x1,y1) // top left
+        ctx.stroke()
+    }
 
     const pathColor=[
-        0x000000,
-        0xff0000,
-        0x00ff00,
-        0x0000ff,
-        0xf0803c,
-        0xedf060,
-        0x225560
+        '#000000',
+        '#ff0000',
+        '#00ff00',
+        '#0000ff',
+        '#f0803c',
+        '#edf060',
+        '#225560'
     ]
-    pathPointsArray.forEach( (pts,idx) => {img.openPolygon(pts, pathColor[idx % pathColor.length]);})
-    await img.savePng(filename, 1)
-    img.destroy()
+    pathPointsArray.forEach( (pts,idx) => {
+        const color =  pathColor[idx % pathColor.length]
+        ctx.strokeStyle = color
+        ctx.beginPath()
+        ctx.moveTo(pts[0].x, pts[0].y)
+        pts.forEach(pt => {ctx.lineTo(pt.x, pt.y)})
+        ctx.stroke()
+    })
+
+    //write to disk
+    await PImage.encodePNGToStream(img, fs.createWriteStream(filename))
+        .catch((e) => {
+            console.log("there was an error writing", e);
+        });
 }
 
 const paintPaths = [
