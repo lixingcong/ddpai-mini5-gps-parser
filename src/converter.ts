@@ -3,25 +3,23 @@ import * as Track from './ddpai/track'
 interface Converted
 {
     name:string
-    content:string | null
-    trackFile: Track.TrackFile | null
+    content?:string
+    trackFile?: Track.TrackFile
 }
 
 class MyFile
 {
-    name:string
-    content:string | null
-    converted: Converted[]
-    keepSameFormat: boolean
-    trackFile: Track.TrackFile | undefined
+    name:string // 源名字
+    content?:string // 源数据
+    converted: Converted[] // Converted对象
+    keepSameFormat: boolean // 当目标格式与源格式相同时，保持原样，无需转换
+    trackFile?: Track.TrackFile
 
     constructor(name:string)
     {
-        this.name = name; // 源名字
-        this.content = null; // 源数据
-        this.converted = []; // Converted对象
-        this.keepSameFormat = false; // 当目标格式与源格式相同时，保持原样，无需转换
-        this.trackFile = undefined
+        this.name = name;
+        this.converted = [];
+        this.keepSameFormat = false;
     }
 
     parseName():[string,string] | undefined

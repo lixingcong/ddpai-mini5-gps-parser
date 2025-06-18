@@ -110,7 +110,7 @@ function gpxToWayPointDict(gpxFileContents:string[]):DDPAI.TimeToWaypoint {
     let GPGGATime:number|undefined; // 保存上次GPGGA时间信息，转成纯数字
 
     function updateReturnValue(timestamp:number, keyValueDict:object){
-        let wp:WayPointIntf
+        let wp:WayPointIntf|undefined = undefined
 
         if(timestamp in ret)
             wp = ret[timestamp]

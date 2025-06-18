@@ -21,16 +21,15 @@ const XMLParserOptions={
 
 class Document
 {
-    name:string|undefined
-    description:string|undefined
+    name?:string
+    description?:string // 仅处理desc标签，不处理cmt标签。（可让用户自行替换gpx文件中的cmt）
     trks:Trk[]
     rtes:Rte[]
     wpts:Wpt[]
 
-    constructor(name:string|undefined)
+    constructor(name?:string)
     {
         this.name = name
-        this.description = undefined; // 仅处理desc标签，不处理cmt标签。（可让用户自行替换gpx文件中的cmt）
         this.trks = []
         this.rtes = []
         this.wpts = []
@@ -65,7 +64,7 @@ class Document
         const parser = new FXP.XMLParser(XMLParserOptions)
         const gpxJson = parser.parse(content)
         if(gpxJson && 'gpx' in gpxJson){
-            let ret = new Document(undefined)
+            let ret = new Document()
             let docJson = gpxJson.gpx
             ret.name = docJson.name
             ret.description = docJson.desc
@@ -87,14 +86,14 @@ class Document
 
 class Wpt implements XmlIntf
 {
-    name:string|undefined
-    description:string|undefined
+    name?:string
+    description?:string
     lat:number
     lon:number
-    altitude:number|undefined
-    timestamp:number|undefined
+    altitude?:number
+    timestamp?:number
 
-    constructor(name:string|undefined, lat:number, lon:number, altitude:number|undefined, timestamp:number|undefined, description:string|undefined)
+    constructor(name:string|undefined, lat:number, lon:number, altitude?:number, timestamp?:number, description?:string)
     {
         this.name = name
         this.description = description
@@ -118,7 +117,7 @@ class Wpt implements XmlIntf
 
     static fromObject(o:any):Wpt
     {
-        let ts:number|undefined
+        let ts:number|undefined = undefined
         if(undefined != o.time)
             ts = DF.fromRfc3339(o.time)
 
@@ -129,11 +128,11 @@ class Wpt implements XmlIntf
 
 class Rte implements XmlIntf
 {
-    name:string|undefined
-    description:string|undefined
+    name?:string
+    description?:string
     rtepts:Wpt[]
 
-    constructor(name:string|undefined, rtepts:Wpt[], description:string|undefined)
+    constructor(name:string|undefined, rtepts:Wpt[], description?:string)
     {
         this.name = name
         this.description = description
@@ -151,7 +150,7 @@ class Rte implements XmlIntf
 
     static fromObject(o:any):Rte
     {
-        let ret = new Rte(o.name, [], undefined)
+        let ret = new Rte(o.name, [])
         if(undefined != o.rtept)
             ret.rtepts = (o.rtept as any[]).map(o => Wpt.fromObject(o))
 
@@ -162,11 +161,11 @@ class Rte implements XmlIntf
 
 class Trk implements XmlIntf
 {
-    name:string|undefined
+    name?:string
+    description?:string
     trksegs:Trkseg[]
-    description:string|undefined
 
-    constructor(name:string|undefined, trksegs:Trkseg[], description:string|undefined)
+    constructor(name:string|undefined, trksegs:Trkseg[], description?:string)
     {
         this.name = name
         this.description = description
@@ -184,7 +183,7 @@ class Trk implements XmlIntf
 
     static fromObject(o:any):Trk
     {
-        let ret = new Trk(o.name, [], undefined)
+        let ret = new Trk(o.name, [])
         ret.description=o.desc
         if(undefined != o.trkseg)
             ret.trksegs = (o.trkseg as any[]).map(o => Trkseg.fromObject(o))

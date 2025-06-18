@@ -25,16 +25,15 @@ const XMLParserOptions={
 
 class Document
 {
-    name:string|undefined
-    description:string|undefined
+    name?:string
+    description?:string
     styles:Style[] // Style对象数组
     placeMarks:PlaceMark[] // PlaceMark数组
     folders:Folder[] // Folder数组
 
-    constructor(name:string|undefined)
+    constructor(name?:string)
     {
         this.name= name
-        this.description = undefined
         this.styles = []; // Style对象数组
         this.placeMarks = []; // PlaceMark数组
         this.folders = []; // Folder数组
@@ -69,7 +68,7 @@ class Document
         const parser = new FXP.XMLParser(XMLParserOptions)
         const kmlJson = parser.parse(content)
         if(kmlJson && 'kml' in kmlJson && 'Document' in kmlJson.kml){
-            let ret = new Document(undefined)
+            let ret = new Document()
             let docJson = kmlJson.kml.Document
             ret.name = docJson.name
             ret.description = docJson.description
@@ -91,23 +90,17 @@ class Document
 
 class PlaceMark implements XmlIntf
 {
-    name:string|undefined
-    description:string|undefined
-    styleId:string|undefined; // 字符串，样式的ID名字
-    point:Point|undefined; // Point对象
-    gxTrack:GxTrack|undefined; // GxTrack对象
-    gxMultiTrack:GxMultiTrack|undefined; // GxMultiTrack对象
-    lineString:LineString|undefined; // LineString对象
+    name?:string
+    description?:string
+    styleId?:string // 字符串，样式的ID名字
+    point?:Point // Point对象
+    gxTrack?:GxTrack // GxTrack对象
+    gxMultiTrack?:GxMultiTrack // GxMultiTrack对象
+    lineString?:LineString // LineString对象
 
-    constructor(name:string|undefined)
+    constructor(name?:string)
     {
         this.name = name
-        this.description = undefined
-        this.styleId = undefined; // 字符串，样式的ID名字
-        this.point = undefined; // Point对象
-        this.gxTrack = undefined; // GxTrack对象
-        this.gxMultiTrack = undefined; // GxMultiTrack对象
-        this.lineString = undefined; // LineString对象
     }
 
     toObject():object
@@ -143,11 +136,11 @@ class PlaceMark implements XmlIntf
 
 class Style implements XmlIntf
 {
-    id:string|undefined
-    lineColor:string|undefined
+    id?:string
+    lineColor?:string
     lineWidth:number
 
-    constructor(id:string|undefined, lineColor:string|undefined, lineWidth:number|undefined)
+    constructor(id?:string, lineColor?:string, lineWidth?:number)
     {
         // Not fully support IconStyle,StyleMap...
         this.id = id
@@ -171,7 +164,7 @@ class Style implements XmlIntf
 
     static fromObject(o:any):Style
     {
-        let ret = new Style(o['@id'], undefined, undefined)
+        let ret = new Style(o['@id'])
         if(undefined != o.LineStyle){
             ret.lineColor = o.LineStyle.color
             ret.lineWidth = o.LineStyle.width
@@ -184,9 +177,9 @@ class Coordinate implements XmlStringIntf
 {
     lat:number
     lon:number
-    altitude:number|undefined
+    altitude?:number
 
-    constructor(lat:number, lon:number, altitude:number|undefined)
+    constructor(lat:number, lon:number, altitude?:number)
     {
         this.lat = lat
         this.lon = lon
@@ -206,7 +199,7 @@ class Coordinate implements XmlStringIntf
         const splited = s.split(',')
         if(splited.length>=2)
         {
-            let ret = new Coordinate(parseFloat(splited[1]), parseFloat(splited[0]), undefined)
+            let ret = new Coordinate(parseFloat(splited[1]), parseFloat(splited[0]))
             if(splited.length >=3)
                 ret.altitude = parseFloat(splited[2])
             return ret
@@ -297,9 +290,9 @@ class GxCoord implements XmlStringIntf
 {
     lat:number
     lon:number
-    altitude:number|undefined
+    altitude?:number
 
-    constructor(lat:number, lon:number, altitude:number|undefined)
+    constructor(lat:number, lon:number, altitude?:number)
     {
         this.lat = lat
         this.lon = lon
@@ -319,7 +312,7 @@ class GxCoord implements XmlStringIntf
         const splited = s.split(' ')
         if(splited.length>=2)
         {
-            let ret = new GxCoord(parseFloat(splited[1]), parseFloat(splited[0]), undefined)
+            let ret = new GxCoord(parseFloat(splited[1]), parseFloat(splited[0]))
             if(splited.length >=3)
                 ret.altitude = parseFloat(splited[2])
             return ret
@@ -335,7 +328,7 @@ class GxTrack implements XmlIntf
     gxCoordArray:GxCoord[]
 
     // GPGGA记录中的高度是海平面高度。因此建议值为absolute
-    constructor(altitudeMode:string|undefined)
+    constructor(altitudeMode?:string)
     {
         this.altitudeMode = altitudeMode ? altitudeMode : AltitudeMode.Absolute
         this.whenArray = []; // When对象数组
@@ -377,7 +370,7 @@ class GxMultiTrack implements XmlIntf
     gxTracks:GxTrack[]
 
     // GPGGA记录中的高度是海平面高度。因此默认为absolute
-    constructor(altitudeMode:string|undefined, gxTracks:GxTrack[])
+    constructor(gxTracks:GxTrack[], altitudeMode?:string)
     {
         this.altitudeMode = altitudeMode ? altitudeMode : AltitudeMode.Absolute
         this.gxTracks = gxTracks; // GxTrack对象，要求每个Track构造时传入altitudeMode=undefined
@@ -394,7 +387,7 @@ class GxMultiTrack implements XmlIntf
 
     static fromObject(o:any):GxMultiTrack
     {
-        let ret = new GxMultiTrack(o.altitudeMode, [])
+        let ret = new GxMultiTrack([], o.altitudeMode)
         if(undefined != o['gx:Track'])
             ret.gxTracks = (o['gx:Track'] as any[]).map(o => GxTrack.fromObject(o))
         return ret
@@ -406,7 +399,7 @@ class LineString implements XmlIntf
     coordinates: Coordinates
     altitudeMode:string
 
-    constructor(coordinates:Coordinates, altitudeMode:string|undefined)
+    constructor(coordinates:Coordinates, altitudeMode?:string)
     {
         this.coordinates = coordinates; // Coordinates对象
         this.altitudeMode = altitudeMode ? altitudeMode : AltitudeMode.Absolute
@@ -433,11 +426,11 @@ class LineString implements XmlIntf
 
 class Folder implements XmlIntf
 {
-    name:string|undefined
+    name?:string
+    description?:string
     placeMarks:PlaceMark[]; // PlaceMark对象数组
-    description:string|undefined
 
-    constructor(name:string|undefined, placeMarks:PlaceMark[], description:string|undefined)
+    constructor(name:string|undefined, placeMarks:PlaceMark[], description?:string)
     {
         this.name = name
         this.placeMarks = placeMarks; // PlaceMark对象数组

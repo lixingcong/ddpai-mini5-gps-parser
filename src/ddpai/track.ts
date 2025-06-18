@@ -6,11 +6,11 @@ import type { WayPointIntf } from './types/waypoint'
 
 class Point implements TRACK_I.Point
 {
-    name:string|undefined
-    description:string|undefined
+    name?:string
+    description?:string
     wayPoint:WayPointIntf
 
-    constructor(name:string|undefined, wayPoint:WayPointIntf, description:string|undefined)
+    constructor(name:string|undefined, wayPoint:WayPointIntf, description?:string)
     {
         this.name = name
         this.description = description
@@ -20,11 +20,11 @@ class Point implements TRACK_I.Point
 
 class Path implements TRACK_I.Path
 {
-    name:string|undefined
-    description:string|undefined
+    name?:string
+    description?:string
     wayPoints:WayPointIntf[]
 
-    constructor(name:string|undefined, wayPoints:WayPointIntf[], description:string|undefined)
+    constructor(name:string|undefined, wayPoints:WayPointIntf[], description?:string)
     {
         this.name = name
         this.description = description
@@ -34,16 +34,15 @@ class Path implements TRACK_I.Path
 
 class TrackFile
 {
-    name:string|undefined; // 文档名字
-    description:string|undefined
+    name?:string // 文档名字
+    description?:string
     points:TRACK_I.Point[] // Point对象数组
     lines:TRACK_I.Path[]; // Path对象数组，没有时间戳
     tracks:TRACK_I.Path[]; // Path对象数组
 
-    constructor(name:string|undefined)
+    constructor(name?:string)
     {
         this.name = name
-        this.description = undefined
         this.points = []
         this.lines = []
         this.tracks = []
@@ -72,7 +71,7 @@ class TrackFile
             placeMark.point = new KML.Point(wp2KmlCoordinate(point.wayPoint), AltitudeMode)
             document.placeMarks.push(placeMark)
         }else if(1<this.points.length){
-            let folder= new KML.Folder('Points',[], undefined)
+            let folder= new KML.Folder('Points',[])
             folder.placeMarks = this.points.map(point => {
                 let placeMark = new KML.PlaceMark(point.name)
                 placeMark.description = point.description
@@ -91,7 +90,7 @@ class TrackFile
             placeMark.styleId=GreenStyle.id
             document.placeMarks.push(placeMark)
         }else if(1<this.lines.length){
-            let folder= new KML.Folder('Routes',[],undefined)
+            let folder= new KML.Folder('Routes',[])
             folder.placeMarks = this.lines.map(path => {
                 let placeMark = new KML.PlaceMark(path.name)
                 placeMark.description = path.description
@@ -112,7 +111,7 @@ class TrackFile
             placeMark.styleId=BlueStyle.id
             document.placeMarks.push(placeMark)
         }else if(1<this.tracks.length){
-            let folder= new KML.Folder('Tracks',[],undefined)
+            let folder= new KML.Folder('Tracks',[])
             folder.placeMarks = this.tracks.map(path => {
                 let placeMark = new KML.PlaceMark(path.name)
                 placeMark.description = path.description
@@ -129,9 +128,6 @@ class TrackFile
 
     static fromKMLDocument(document:KML.Document):TrackFile|undefined
     {
-        if(undefined == document)
-            return undefined
-
         let ret = new TrackFile(document.name)
         ret.description = document.description
 
@@ -188,19 +184,16 @@ class TrackFile
         document.description = this.description
 
         // WP.WayPoint转GPX.Wpt
-        const wp2GpxWpt = (wp:WayPointIntf,name:string|undefined,description:string|undefined) => new GPX.Wpt(name, wp.lat!, wp.lon!, wp.altitude, wp.timestamp, description)
+        const wp2GpxWpt = (wp:WayPointIntf,name?:string,description?:string) => new GPX.Wpt(name, wp.lat!, wp.lon!, wp.altitude, wp.timestamp, description)
 
         document.wpts=this.points.map(point => wp2GpxWpt(point.wayPoint, point.name, point.description))
-        document.rtes=this.lines.map(path => new GPX.Rte(path.name, path.wayPoints.map(wp => wp2GpxWpt(wp, undefined, undefined)), path.description))
-        document.trks=this.tracks.map(path => new GPX.Trk(path.name, [new GPX.Trkseg(path.wayPoints.map(wp => wp2GpxWpt(wp, undefined, undefined)))], path.description))
+        document.rtes=this.lines.map(path => new GPX.Rte(path.name, path.wayPoints.map(wp => wp2GpxWpt(wp)), path.description))
+        document.trks=this.tracks.map(path => new GPX.Trk(path.name, [new GPX.Trkseg(path.wayPoints.map(wp => wp2GpxWpt(wp)))], path.description))
         return document
     }
 
     static fromGPXDocument(document:GPX.Document):TrackFile|undefined
     {
-        if(undefined == document)
-            return undefined
-
         let ret = new TrackFile(document.name)
         ret.description = document.description
 
@@ -224,22 +217,29 @@ class TrackFile
 
 class Rect
 {
-    x1:number|undefined
-    y1:number|undefined
-    x2:number|undefined
-    y2:number|undefined
+    x1?:number
+    y1?:number
+    x2?:number
+    y2?:number
 
     topLeftX:number
     topLeftY:number
     bottomRightX:number
     bottomRightY:number
 
-    constructor(x1:number|undefined,y1:number|undefined,x2:number|undefined,y2:number|undefined)
+    constructor(x1?:number,y1?:number,x2?:number,y2?:number)
     {
-        this.topLeftX = undefined == x1 ? Number.MAX_SAFE_INTEGER : x1
-        this.topLeftY = undefined == y1 ? Number.MAX_SAFE_INTEGER : y1
-        this.bottomRightX = undefined == x2 ? Number.MIN_SAFE_INTEGER : x2
-        this.bottomRightY = undefined == y2 ? Number.MIN_SAFE_INTEGER : y2
+        if(undefined == x1||undefined == x2||undefined == y1||undefined == y2){
+            this.topLeftX = Number.MAX_SAFE_INTEGER
+            this.topLeftY = Number.MAX_SAFE_INTEGER
+            this.bottomRightX = Number.MIN_SAFE_INTEGER
+            this.bottomRightY = Number.MIN_SAFE_INTEGER
+        }else{
+            this.topLeftX = x1
+            this.topLeftY = y1
+            this.bottomRightX = x2
+            this.bottomRightY = y2
+        }
     }
 
     isValid()
@@ -306,8 +306,8 @@ class PaintResult {
     horizontalDistance:number // 画布的实际距离（米）
     verticalDistance:number // 画布的实际距离（米）
 
-    topLeft:TRACK_I.XY|undefined // 这些点位构成的Rect左上角
-    bottomRight:TRACK_I.XY|undefined
+    topLeft?:TRACK_I.XY // 这些点位构成的Rect左上角
+    bottomRight?:TRACK_I.XY
 
 
     constructor(paintPoints:TRACK_I.PaintPoint[]=[], horizontalDistance:number, verticalDistance:number)
@@ -315,9 +315,6 @@ class PaintResult {
         this.points = paintPoints
         this.horizontalDistance = horizontalDistance; // 画布的实际距离（米）
         this.verticalDistance = verticalDistance
-
-        this.topLeft = undefined; // PaintPoint对象，指示这些点位构成的Rect左上角
-        this.bottomRight = undefined
     }
 }
 
@@ -336,7 +333,7 @@ function paint(paths:TRACK_I.Path[], width:number, height:number):TRACK_I.PaintR
     if(!width || !height)
         return undefined; // invalid
 
-    let rect = new Rect(undefined, undefined, undefined, undefined)
+    let rect = new Rect()
     let XY:TRACK_I.XY[][] = []
 
     paths.forEach(path => {

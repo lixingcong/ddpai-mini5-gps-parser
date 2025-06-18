@@ -4,15 +4,15 @@ type XY = [number, number]
 
 interface Point
 {
-    name:string|undefined
-    description:string|undefined
+    name?:string
+    description?:string
     wayPoint:WayPointIntf
 }
 
 interface Path
 {
-    name:string|undefined
-    description:string|undefined
+    name?:string
+    description?:string
     wayPoints:WayPointIntf[]
 }
 
@@ -36,8 +36,8 @@ interface PaintResult
     horizontalDistance:number // 画布的实际距离（米）
     verticalDistance:number // 画布的实际距离（米）
 
-    topLeft:XY|undefined // 这些点位构成的Rect左上角
-    bottomRight:XY|undefined
+    topLeft?:XY // 这些点位构成的Rect左上角
+    bottomRight?:XY
 }
 
 export{

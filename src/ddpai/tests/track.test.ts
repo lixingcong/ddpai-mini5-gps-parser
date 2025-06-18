@@ -10,8 +10,8 @@ track.description = "Doc description xxx"
 
 if(1){
     track.points = [
-        new TRACK.Point('Point 1', new WP.WayPoint(22.1234, 114.1234, 10, 20), undefined),
-        new TRACK.Point('Point 2', new WP.WayPoint(22.1235, 114.1235), undefined)
+        new TRACK.Point('Point 1', new WP.WayPoint(22.1234, 114.1234, 10, 20)),
+        new TRACK.Point('Point 2', new WP.WayPoint(22.1235, 114.1235))
     ]
     track.points.forEach((p, idx) => {p.description='Point description '+(1+idx)})
 }
@@ -22,12 +22,12 @@ if(1){
             new WP.WayPoint(22.1236, 114.1236, undefined, 10),
             new WP.WayPoint(22.1237, 114.1237, 0, 20),
             new WP.WayPoint(22.1238, 114.1238, 1, 30)
-        ], undefined),
+        ]),
         new TRACK.Path('Line 2', [
             new WP.WayPoint(22.1246, 114.1236),
             new WP.WayPoint(22.1247, 114.1237),
             new WP.WayPoint(22.1248, 114.1238)
-        ], undefined)
+        ])
     ]
     track.lines.forEach((p, idx) => {p.description='Line description '+(1+idx)})
 }
@@ -40,12 +40,12 @@ if(1){
             new WP.WayPoint(22.1236, 114.1236, timestamp++, 30),
             new WP.WayPoint(22.1237, 114.1237, timestamp++),
             new WP.WayPoint(22.1238, 114.1238, timestamp++, 39)
-        ], undefined),
+        ]),
         new TRACK.Path('Track 2', [
             new WP.WayPoint(22.1246, 114.1236, timestamp++, 41),
             new WP.WayPoint(22.1247, 114.1237, timestamp++, 42),
             new WP.WayPoint(22.1248, 114.1238, timestamp++)
-        ], undefined)
+        ])
     ]
     track.tracks.forEach((p, idx) => {p.description='Track description '+(1+idx)})
 }
@@ -58,7 +58,7 @@ test('KML Track', () => {
     const kmlFileContent = kmlDoc.toFile(true)
 
     if(NeedToWrite)
-        TEST_COMMON.writeFile('/tmp/track-1.kml', kmlFileContent, undefined)
+        TEST_COMMON.writeFile('/tmp/track-1.kml', kmlFileContent)
 
     const trackFromDoc = TRACK.TrackFile.fromKMLDocument(kmlDoc)
     expect.soft(trackFromDoc).toBeDefined()
@@ -69,7 +69,7 @@ test('KML Track', () => {
         expect.soft(same).toBeTruthy()
 
         if(NeedToWrite && !same)
-           TEST_COMMON.writeFile('/tmp/track-1-diff.kml', trackToKmlContent, undefined)
+           TEST_COMMON.writeFile('/tmp/track-1-diff.kml', trackToKmlContent)
     }
 })
 
@@ -78,7 +78,7 @@ test('GPX Track', () => {
     const gpxFileContent = gpxDoc.toFile(true)
 
     if(NeedToWrite)
-        TEST_COMMON.writeFile('/tmp/track-1.gpx', gpxFileContent, undefined)
+        TEST_COMMON.writeFile('/tmp/track-1.gpx', gpxFileContent)
 
     const trackFromDoc = TRACK.TrackFile.fromGPXDocument(gpxDoc)
     expect.soft(trackFromDoc).toBeDefined()
@@ -89,7 +89,7 @@ test('GPX Track', () => {
         expect.soft(same).toBeTruthy()
 
         if(NeedToWrite && !same)
-           TEST_COMMON.writeFile('/tmp/track-1-diff.gpx', trackToGpxContent, undefined)
+           TEST_COMMON.writeFile('/tmp/track-1-diff.gpx', trackToGpxContent)
     }
 })
 
@@ -104,7 +104,7 @@ async function paint(paintResult:TRACK_I.PaintResult, jpgWidth:number, jpgHeight
     //const actualDistance = 'distance w='+paintResult.horizontalDistance.toFixed(1)+', h='+paintResult.verticalDistance.toFixed(1)
     //console.log(filename+', '+actualDistance)
 
-    let pathPoints:TRACK_I.PaintPoint[]
+    let pathPoints:TRACK_I.PaintPoint[] = []
     let pathPointsArray:TRACK_I.PaintPoint[][] = []
     paintResult.points.forEach(paintPoint => {
         if(paintPoint.cmd == TRACK_I.PaintCmd.TrackStart)
@@ -153,14 +153,14 @@ const paintPaths = [
         new WP.WayPoint(48.7246779, -3.9824534),
         new WP.WayPoint(48.7243794, -3.9822469),
         new WP.WayPoint(48.7242453, -3.9821320)
-    ],undefined),
+    ]),
     new TRACK.Path(undefined, [
         new WP.WayPoint(48.7233989, -3.9816133),
         new WP.WayPoint(48.7232602, -3.9814227),
         new WP.WayPoint(48.7230069, -3.9809848),
         new WP.WayPoint(48.7228084, -3.9806580),
         new WP.WayPoint(48.7225169, -3.9801481)
-    ],undefined),
+    ]),
     new TRACK.Path(undefined, [
         new WP.WayPoint(48.7223222, -3.97623846),
         new WP.WayPoint(48.7223235, -3.97623830),
@@ -172,7 +172,7 @@ const paintPaths = [
         new WP.WayPoint(48.7228985, -3.97579397),
         new WP.WayPoint(48.7229241, -3.97572779),
         new WP.WayPoint(48.7230278, -3.97556016)
-    ],undefined)
+    ])
 ]
 
 await test.each([

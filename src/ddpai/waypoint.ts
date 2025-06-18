@@ -7,20 +7,16 @@ const M_PI_4 = Math.PI / 4
 const WGS84_RADIUS = 6378137
 
 class WayPoint implements WayPointIntf {
-    lat: number|undefined // 十进制纬度 latitude
-    lon: number|undefined // 十进制经度 longitude
+    lat?: number // 十进制纬度 latitude
+    lon?: number // 十进制经度 longitude
 
-    timestamp: number|undefined // Unix时间戳（秒）
-    altitude: number|undefined // 海拔高度单位：米
-    speed: number|undefined // 速度单位：km/h
-    heading: number| undefined // 航向单位：度
-    hdop: number|undefined // 水平精度单位：米
+    timestamp?: number // Unix时间戳（秒）
+    altitude?: number // 海拔高度单位：米
+    speed?: number // 速度单位：km/h
+    heading?: number // 航向单位：度
+    hdop?: number // 水平精度单位：米
 
-    constructor(
-        lat: number|undefined = undefined,
-        lon: number|undefined = undefined,
-        timestamp: number|undefined = undefined,
-        altitude: number|undefined = undefined)
+    constructor(lat?: number, lon?: number, timestamp?: number, altitude?: number)
     {
         this.lat = lat
         this.lon = lon
@@ -39,7 +35,7 @@ class WayPoint implements WayPointIntf {
     // 参数other为另一WayPoint，也可为undefined，此时返回0
     distanceTo(other: WayPointIntf):number
     {
-        if(undefined == other || !this.hasGeometry() || !other.hasGeometry())
+        if(!this.hasGeometry() || !other.hasGeometry())
             return 0
 
         const dx = this.lon! - other.lon!
@@ -71,11 +67,11 @@ class WayPoint implements WayPointIntf {
 // distanceThreshold 距离阈值，若与上一点的距离大于该值（单位：米），则累积该位移
 function wayDistance(wayPoints:WayPoint[], speedThreshold:number = 1.5, distanceThreshold:number = 50){
 	let distance:number = 0.0
-	let lastWayPoint:WayPoint
+	let lastWayPoint:WayPoint|undefined = undefined
 
 	wayPoints.forEach(wayPoint => {
 		const speed = wayPoint.hasSpeed() ? wayPoint.speed! : 0.0
-        const thisDistance = wayPoint.distanceTo(lastWayPoint)
+        const thisDistance = lastWayPoint ? wayPoint.distanceTo(lastWayPoint) : 0.0
 
 		if (speed > speedThreshold || thisDistance > distanceThreshold) {
 			distance += thisDistance

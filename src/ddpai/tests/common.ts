@@ -10,7 +10,7 @@ export {
 
 type WriteFileDoneCallback = (content: string) => void
 
-const writeFile = (path:string, content:string, callback:WriteFileDoneCallback|undefined) => {
+const writeFile = (path:string, content:string, callback?:WriteFileDoneCallback) => {
     fs.writeFile(path, content, error => {
         let s = 'writeFile(' + path + '): '
 
@@ -28,7 +28,7 @@ const writeFile = (path:string, content:string, callback:WriteFileDoneCallback|u
 
 type ReadFileDoneCallback = (content:string) => void
 
-const readFile = (path:string, callback:ReadFileDoneCallback|undefined) => {
+const readFile = (path:string, callback?:ReadFileDoneCallback) => {
     fs.readFile(path, 'utf-8', (error, content) =>{
         let s = 'readFile(' + path + '): '
 

@@ -48,7 +48,7 @@ class RequestDecorator implements RequestDecoratorParam {
   }
 
   startBlocking() {
-    let _resolve: PromiseResolveCallback
+    let _resolve: PromiseResolveCallback|undefined = undefined
     let promise2 = new Promise((resolve, reject) => _resolve = resolve)
     this.requestQueue.push(_resolve!)
     return promise2

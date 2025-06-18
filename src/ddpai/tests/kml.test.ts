@@ -31,17 +31,17 @@ if(1){
     placeMark.description='This is my xxxx'
     placeMark.styleId = 'BlueStyle'
 
-    let t1= new KML.GxTrack(undefined)
+    let t1= new KML.GxTrack()
     t1.append(new KML.When(10), new KML.GxCoord(22.8873613, 114.5812708, 61))
     t1.append(new KML.When(11), new KML.GxCoord(22.8873333, 114.5811908, 62))
     t1.append(new KML.When(12), new KML.GxCoord(22.8873018, 114.5811170, 63))
 
-    let t2= new KML.GxTrack(undefined)
+    let t2= new KML.GxTrack()
     t2.append(new KML.When(20), new KML.GxCoord(22.8865555, 114.5800712, 64))
     t2.append(new KML.When(21), new KML.GxCoord(22.8864997, 114.5800135, 65))
     t2.append(new KML.When(22), new KML.GxCoord(22.8864357, 114.5799503, 66))
 
-    placeMark.gxMultiTrack = new KML.GxMultiTrack(KML.AltitudeMode.Absolute, [t1, t2])
+    placeMark.gxMultiTrack = new KML.GxMultiTrack([t1, t2], KML.AltitudeMode.Absolute)
     document.placeMarks.push(placeMark)
 }
 
@@ -53,7 +53,7 @@ if(1){
         new KML.Coordinates([
             new KML.Coordinate(22.8753703, 114.5686210, 456),
             new KML.Coordinate(22.8753240, 114.5684628, 457),
-            new KML.Coordinate(22.8752790, 114.5683027, undefined),
+            new KML.Coordinate(22.8752790, 114.5683027),
             new KML.Coordinate(22.8752370, 114.5681358, 455)
         ]),
         KML.AltitudeMode.Absolute
@@ -63,12 +63,12 @@ if(1){
 
 if(1){
     for(let i = 0;i<2;++i){
-        let folder= new KML.Folder('Folder Name '+i, [], undefined)
+        let folder= new KML.Folder('Folder Name '+i, [])
 
         for(let j:number =0;j<2;++j){
             let placeMark = new KML.PlaceMark('POI '+i+'-'+j)
             placeMark.point = new KML.Point(
-                new KML.Coordinate(22.8620573+j, 114.5778273+j, undefined),
+                new KML.Coordinate(22.8620573+j, 114.5778273+j),
                 KML.AltitudeMode.Absolute
             )
             folder.placeMarks.push(placeMark)
@@ -83,7 +83,7 @@ const documentFromContent = KML.Document.fromFile(content)
 
 test('KML', () => {
     // write the OK result
-    TEST_COMMON.writeFile('/tmp/kml2.kml', content, undefined)
+    TEST_COMMON.writeFile('/tmp/kml2.kml', content)
 
     expect.soft(documentFromContent).toBeDefined()
 
@@ -93,7 +93,7 @@ test('KML', () => {
 
         if(!same){
             // write the NG result
-            TEST_COMMON.writeFile('/tmp/kml2-diff.kml', documentFromContent.toFile(true) , undefined)
+            TEST_COMMON.writeFile('/tmp/kml2-diff.kml', documentFromContent.toFile(true))
         }
     }
 })
