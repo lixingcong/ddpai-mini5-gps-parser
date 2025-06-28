@@ -229,11 +229,12 @@ async function getFromHttpServer(){
 	})
 }
 
-function exportToTrack(singleFile:boolean){
+async function exportToTrack(singleFile:boolean){
     const costTimestampBegin = DF.now()
 	const timestamps = Object.keys(timestampToWayPoints).map(Number).sort(); // 按时间排序
 
 	clearDownloads()
+	await nextTick()
 
 	if (timestamps.length > 0) {
 		// 按时间差分阈值分割完毕的结果

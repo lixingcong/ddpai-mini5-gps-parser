@@ -194,7 +194,7 @@ async function onClickedConvert()
     }
 }
 
-function beginToExport(srcFiles:FileList){
+async function beginToExport(srcFiles:FileList){
     infoList.timestampBegin = DF.now()
 
     srcFileCount.value = srcFiles.length
@@ -205,6 +205,8 @@ function beginToExport(srcFiles:FileList){
     showPreviewZipButton.value = false
     clearInfos()
     clearErrors()
+
+    await nextTick()
 
     // do work now!
     infoList.show = true
