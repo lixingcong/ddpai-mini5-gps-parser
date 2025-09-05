@@ -1,6 +1,4 @@
 <template>
-    <div :class="hideContent ? 'card-title-hidden' : 'card-title'" @click="hideContent = !hideContent">记录仪轨迹下载</div>
-    <div :class="hideContent ? 'card-content-hidden' : 'card-content'">
         <div class="btn-container">
             <span class="btn-spacer">
                 <button @click="getFromHttpServer">从记录仪获取</button>
@@ -92,7 +90,6 @@
 			<div>错误信息（{{errorList.length}}条）</div>
 			<div v-for="(e,idx) in errorList" class="error">{{ idx+1 }}: {{ e }}</div>
 		</div>
-    </div>
 </template>
 
 <script setup lang="ts" name="Downloader">
@@ -116,7 +113,6 @@ import {type DownloadLinkProps }  from '../types/DownloadLink'
 import { type GPSFileGroup } from '@/types/GPSFileTable'
 import JSZip from 'jszip'
 
-const hideContent = ref(false)
 const enableTrack = ref(true)
 const enableLine = ref(false)
 const enableTwoPoint = ref(true)

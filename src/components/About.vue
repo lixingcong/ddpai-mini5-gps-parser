@@ -1,6 +1,4 @@
 <template>
-    <div :class="hideContent ? 'card-title-hidden' : 'card-title'" @click="hideContent = !hideContent">关于</div>
-    <div :class="hideContent ? 'card-content-hidden' : 'card-content'">
         <div>
             版本<span class="btn-spacer"><a target="_blank" :href="props.url">{{ commit }}</a> {{ commitDate }}</span>
         </div>
@@ -10,7 +8,6 @@
                 <span class="btn-spacer"><a target="_blank" :href="w.value">{{ w.text }}</a></span>
             </template>
         </div>
-    </div>
 </template>
 
 <script setup lang="ts" name="About">
@@ -19,7 +16,6 @@ import { ref } from 'vue'
 
 const props = defineProps<{url:string}>()
 
-let hideContent = ref(true)
 const [commit, commitDate] = version()
 
 const otherWebsites = [

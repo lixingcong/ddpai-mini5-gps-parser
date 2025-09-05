@@ -1,6 +1,4 @@
 <template>
-    <div :class="hideContent ? 'card-title-hidden' : 'card-title'" @click="hideContent = !hideContent">轨迹文件转换</div>
-    <div :class="hideContent ? 'card-content-hidden' : 'card-content'">
         <div class="btn-container">
             <input type="file" ref="fileInput" name="files[]" multiple accept=".kml,.gpx" />
         </div>
@@ -72,7 +70,6 @@
 			<div v-for="(e,idx) in errorList" class="error">{{ idx+1 }}: {{ e }}</div>
 		</div>
         <component is="script" ref="scriptLoader" v-if="renderComponent"></component>
-    </div>
 </template>
 
 <script setup lang="ts" name="Converter">
@@ -108,7 +105,6 @@ window.trackFileHook = function(trackFile){
 }
 `
 
-const hideContent = ref(true)
 const trackFileHookCode = ref(trackFileHookCode_)
 const trackFileHookCodeEnabled = ref(false)
 const canvasWidth=ref(100)
