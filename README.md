@@ -1,6 +1,6 @@
 # 导出记录仪中的轨迹到KML/GPX文件
 
-在项目[Release页面](https://github.com/lixingcong/ddpai-mini5-gps-parser/releases)下载预编译好的dist静态网页，部署到虚拟主机（或者github.io静态网站），访问index.html即可
+在项目[Release页面](https://github.com/lixingcong/ddpai-mini5-gps-parser/releases)下载预编译好的dist静态网页，部署到虚拟主机（或者github.io静态网站），访问index.html即可。点击[网页Demo](https://lixingcong.github.io/ddpai-mini5-gps-parser)预览效果。
 
 # 使用方法
 
