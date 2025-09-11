@@ -28,9 +28,9 @@
             </div>
             <div class="btn-container">
                 <label>小地图长度</label>
-                <input type="number" v-model="canvasWidth" min="40" max="1600" style="max-width: 5em;" />
+                <input type="number" v-model="canvasWidth" :min="CanvasWidthRange[0]" :max="CanvasWidthRange[1]" step=10 style="max-width: 5em;" />
                 <label>高度</label>
-                <input type="number" v-model="canvasHeight" min="40" max="1600" style="max-width: 5em;" />
+                <input type="number" v-model="canvasHeight" :min="CanvasHeightRange[0]" :max="CanvasHeightRange[1]" step=10 style="max-width: 5em;" />
             </div>
             <div class="btn-container">
                 <label><input type="checkbox" v-model="trackFileHookCodeEnabled"></input>对TrackFile进行后处理</label>
@@ -76,7 +76,7 @@
 import HelpTip from "./HelpTip.vue"
 import TrackPreview from './TrackPreview.vue'
 import {type TrackPreviewProps }  from '../types/TrackPreview'
-import { computed, nextTick, reactive, ref } from "vue"
+import { computed, nextTick, reactive, ref, watch, watchEffect } from "vue"
 import { MyFile } from "@/converter"
 import * as DF from '@/ddpai/date-format'
 import * as TRACK from '@/ddpai/track'
@@ -124,6 +124,7 @@ const infoList = reactive({
 })
 const showPreviewZipButton = ref(false)
 const trackPreviewProps:TrackPreviewProps[] = reactive([])
+const trackPreviewPaths:TRACK.Path[][] = []
 
 // 来自js版的变量
 const errorList:string[] = reactive([])
@@ -135,6 +136,9 @@ const fileFormatOptions = [
   { text: '转为KML', value: 'kml' },
   { text: '转为GPX', value: 'gpx' },
 ]
+
+const CanvasWidthRange = [40, 1600]
+const CanvasHeightRange = [40, 1600]
 
 interface TrackDownload
 {
@@ -197,6 +201,7 @@ async function beginToExport(srcFiles:FileList){
     myFiles=[]
     fileProgress.value = 0
     trackDownloadLinks.length = 0
+    trackPreviewPaths.length = 0
     trackPreviewProps.length = 0
     showPreviewZipButton.value = false
     clearInfos()
@@ -311,6 +316,7 @@ function listAllFiles(){
                 }
             }
 
+            trackPreviewPaths.push(paths)
             trackPreviewProps.push(props)
         })
     })
@@ -323,6 +329,24 @@ const convertedCostTime = computed(():string => {
             return UTILS.millisecondToHumanReadableString(n - infoList.timestampBegin)
     }
     return ''
+})
+
+watchEffect(() => {
+    if (canvasWidth.value < CanvasWidthRange[0])
+        canvasWidth.value = CanvasWidthRange[0]
+    else if (canvasWidth.value > CanvasWidthRange[1])
+        canvasWidth.value = CanvasWidthRange[1]
+
+    if (canvasHeight.value < CanvasHeightRange[0])
+        canvasHeight.value = CanvasHeightRange[0]
+    else if (canvasHeight.value > CanvasHeightRange[1])
+        canvasHeight.value = CanvasHeightRange[1]
+
+    trackPreviewProps.forEach((props,idx) => {
+        props.canvasWidth = canvasWidth.value
+        props.canvasHeight = canvasHeight.value
+        props.paintResult = TRACK.paint(trackPreviewPaths[idx], canvasWidth.value, canvasHeight.value)!
+    })
 })
 
 // ---- promise 1 ----

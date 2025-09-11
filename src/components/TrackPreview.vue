@@ -24,24 +24,21 @@
 
 <script setup lang="ts" name="TrackPreview">
 import { newCanvasDiv } from '@/canvasdraw'
-import { computed, nextTick, ref } from 'vue'
+import { computed, onMounted, ref, toRef, watch, watchEffect } from 'vue'
 import { type TrackPreviewProps } from '@/types/TrackPreview'
 import * as UTILS from '@/ddpai/utils'
 import DownloadLink from './DownloadLink.vue'
+import { toRad } from 'pureimage/dist/point'
 
 let canvas = ref()
 
 const props = defineProps<TrackPreviewProps>()
 
-const horizontalDistanceHint = UTILS.meterToString(props.paintResult.horizontalDistance)
-const verticalDistanceHint = UTILS.meterToString(props.paintResult.verticalDistance)
+const canvasWidth = toRef(props, 'canvasWidth')
+const canvasHeight = toRef(props, 'canvasHeight')
 
-setTimeout(async () => {
-    await nextTick() // To make sure DOM has been initialized
-    const c = canvas.value as HTMLCanvasElement
-    if (c)
-        newCanvasDiv(c, props.paintResult.points, true, props.canvasWidth, props.canvasHeight)
-}, 1)
+const horizontalDistanceHint = computed(() => UTILS.meterToString(props.paintResult.horizontalDistance))
+const verticalDistanceHint = computed(() => UTILS.meterToString(props.paintResult.verticalDistance))
 
 const convertedHint = computed(():string => {
     if(props.convert)
@@ -63,6 +60,18 @@ const downloadedHint = computed(():string => {
     }
     return ''
 })
+
+const repaint = () =>{
+    const c = canvas.value as HTMLCanvasElement
+    if(c)
+        newCanvasDiv(c, props.paintResult.points, true, canvasWidth.value, canvasHeight.value)
+}
+
+onMounted(()=>{
+    repaint()
+})
+
+watchEffect(repaint)
 
 </script>
 

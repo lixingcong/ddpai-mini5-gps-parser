@@ -19,6 +19,8 @@ function newCanvasDiv(canvas:HTMLCanvasElement, paintPoints:TRACK_I.PaintPoint[]
     if(!ctx)
         return false
 
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
     ctx.lineWidth = 1
     ctx.strokeStyle = 'black'
 
