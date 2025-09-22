@@ -2,9 +2,7 @@ import * as WP from './waypoint'
 import * as GPS_I from './types/gps'
 import type { WayPointIntf } from './types/waypoint'
 
-const FirmwareTimestampOffset = -28800 // 盯盯拍固件中timestamp时差（猜想是厂商的固定值？没有参数可以更改该值）
 const LatLonDecimal = 6 // 经纬度的小数位数，6位足够了。按照1纬度111km计算，保留六位小数可以精确到0.1米
-
 
 /**
  * 整合多个段为单独连续的一部分 https://leetcode.com/problems/merge-intervals
@@ -47,19 +45,6 @@ function mergeIntervals(intervals:GPS_I.Interval[]) : GPS_I.MergedIntervals {
     })
 
     return { intervals: merged, index: index }
-}
-
-/**
- * 从json中提取出SessionId字段
- *
- * @param {string} inputJson 输入值，即API_RequestSessionID的结果
- * @return {string} 会话ID，若无效，则返回空字符串
- */
-function API_RequestSessionID(inputJson: string):string{
-    const j = JSON.parse(inputJson)
-    if(0 == j.errcode)
-        return JSON.parse(j.data).acSessionId as string
-    return ''
 }
 
 /**
@@ -265,7 +250,6 @@ function preprocessRawGpxFile(gpxFileContent:string, maxLineCount:number, newlin
 
 export {
     mergeIntervals,
-    // API_RequestSessionID,
     gpxToWayPointDict,
     preprocessRawGpxFile,
     dddmmToDecimal

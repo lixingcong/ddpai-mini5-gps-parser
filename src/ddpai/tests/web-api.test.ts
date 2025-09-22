@@ -32,3 +32,12 @@ test('GpsFileListReq', () => {
     expect(api.parseResopnse(input)).toBeTruthy()
     expect(api.files).toEqual(expectOutput)
 })
+
+test('RequestSessionID', ()=>{
+    const input = '{"errcode":0,"data":"{\\"acSessionId\\":\\"syGT8SOiGv0f1bOjL81aXP0arbiLWf8\\"}"}'
+    const expectOutput = 'syGT8SOiGv0f1bOjL81aXP0arbiLWf8'
+
+    const api = new API.RequestSessionID()
+    expect(api.parseResopnse(input)).toBeTruthy()
+    expect(api.sessionId).toEqual(expectOutput)
+})

@@ -43,4 +43,27 @@ class GpsFileListReq extends WEBAPI.Astract
     }
 }
 
-export { GpsFileListReq }
+class RequestSessionID extends WEBAPI.Astract
+{
+    sessionId: string = ''
+
+    request(): WEBAPI.Request
+    {
+        return {headers:{}, body:''}
+    }
+
+    parseResopnse(body: string): boolean
+    {
+        this.sessionId = ''
+
+        const j = JSON.parse(body)
+        if(0 == j.errcode){
+            this.sessionId = JSON.parse(j.data).acSessionId as string;
+            return true
+        }
+
+        return false
+    }
+}
+
+export { GpsFileListReq, RequestSessionID }
