@@ -3,6 +3,7 @@ import * as GPS_I from './types/gps'
 import * as GPS from './gps'
 
 const TimestampOffset = 28800 // 盯盯拍固件中timestamp时差（猜想是厂商的固定值？没有参数可以更改该值）
+const IMEI = '6b6014501d19a893'
 
 class GpsFileListReq extends WEBAPI.Astract
 {
@@ -84,7 +85,7 @@ class RequestCertificate extends WEBAPI.Astract
                 'sessionid': this.sessionId,
                 'Cookie': `SessionID=${this.sessionId}`
             },
-            body:'{"user":"admin","password":"admin","level":0,"uid":"6b6014501d19a893"}'
+            body:`{"user":"admin","password":"admin","level":0,"uid":"${IMEI}"}`
         }
     }
 
