@@ -2,10 +2,11 @@ import * as WEBAPI from './types/web-api'
 import * as GPS_I from './types/gps'
 import * as GPS from './gps'
 
+const TimestampOffset = 28800 // 盯盯拍固件中timestamp时差（猜想是厂商的固定值？没有参数可以更改该值）
+
 class GpsFileListReq extends WEBAPI.Astract
 {
     files:GPS_I.GPSFile[] = []
-    timestampOffset = -28800 // 盯盯拍固件中timestamp时差（猜想是厂商的固定值？没有参数可以更改该值）
 
     request(): WEBAPI.Request
     {
@@ -25,7 +26,7 @@ class GpsFileListReq extends WEBAPI.Astract
             }
 
             const file = JSON.parse(j.data).file as GPSFile[]
-            const timespan = file.map(f => [parseInt(f.starttime) + this.timestampOffset, parseInt(f.endtime) + this.timestampOffset] as GPS_I.Interval)
+            const timespan = file.map(f => [parseInt(f.starttime) - TimestampOffset, parseInt(f.endtime) - TimestampOffset] as GPS_I.Interval)
             const filenames = file.map(f => f.name)
             const mergedResult = GPS.mergeIntervals(timespan)
 
@@ -66,4 +67,32 @@ class RequestSessionID extends WEBAPI.Astract
     }
 }
 
-export { GpsFileListReq, RequestSessionID }
+class RequestCertificate extends WEBAPI.Astract
+{
+    readonly sessionId: string = ''
+
+    constructor(sessionId:string)
+    {
+        super()
+        this.sessionId = sessionId
+    }
+
+    request(): WEBAPI.Request
+    {
+        return {
+            headers:{
+                'sessionid': this.sessionId,
+                'Cookie': `SessionID=${this.sessionId}`
+            },
+            body:'{"user":"admin","password":"admin","level":0,"uid":"6b6014501d19a893"}'
+        }
+    }
+
+    parseResopnse(body: string): boolean
+    {
+        const j = JSON.parse(body)
+        return 0 == j.errcode
+    }
+}
+
+export { GpsFileListReq, RequestSessionID, RequestCertificate }
