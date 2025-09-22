@@ -7,9 +7,9 @@ interface Request {
     body: string
 }
 
-abstract class AstractWebAPI {
+abstract class Astract {
     abstract request(): Request
     abstract parseResopnse(body: string): boolean
 }
 
-export { type Headers, type Request, AstractWebAPI }
+export { type Headers, type Request, Astract }

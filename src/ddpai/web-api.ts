@@ -3,7 +3,7 @@ import * as DDPAI from './types/ddpai'
 
 import * as GPS from './gps'
 
-class GpsFileListReq extends WEBAPI.AstractWebAPI
+class GpsFileListReq extends WEBAPI.Astract
 {
     files:DDPAI.GPSFile[] = []
     timestampOffset = -28800 // 盯盯拍固件中timestamp时差（猜想是厂商的固定值？没有参数可以更改该值）
