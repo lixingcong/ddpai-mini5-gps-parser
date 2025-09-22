@@ -56,7 +56,7 @@ function mergeIntervals(intervals:DDPAI.Interval[]) : DDPAI.MergedIntervals {
  * @return {array} 当errcode字段为0时，返回数组，每个元素是字典，键值对详见代码，否则返回Array()
  */
 function API_GpsFileListReqToArray(inputJson:string):DDPAI.GPSFile[] {
-    let j = JSON.parse(inputJson)
+    const j = JSON.parse(inputJson)
     let ret:DDPAI.GPSFile[]= []
     if (0 == j.errcode) {
         const file = JSON.parse(j.data).file as DDPAI.API_GPSFile[]
@@ -72,6 +72,19 @@ function API_GpsFileListReqToArray(inputJson:string):DDPAI.GPSFile[] {
 
     ret.forEach(i => { i.filename.sort(); })
     return ret
+}
+
+/**
+ * 从json中提取出SessionId字段
+ *
+ * @param {string} inputJson 输入值，即API_RequestSessionID的结果
+ * @return {string} 会话ID，若无效，则返回空字符串
+ */
+function API_RequestSessionID(inputJson: string):string{
+    const j = JSON.parse(inputJson)
+    if(0 == j.errcode)
+        return JSON.parse(j.data).acSessionId as string
+    return ''
 }
 
 /**
@@ -278,6 +291,7 @@ function preprocessRawGpxFile(gpxFileContent:string, maxLineCount:number, newlin
 export {
     mergeIntervals,
     API_GpsFileListReqToArray,
+    API_RequestSessionID,
     gpxToWayPointDict,
     preprocessRawGpxFile,
     dddmmToDecimal

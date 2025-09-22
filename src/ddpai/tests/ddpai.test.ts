@@ -39,6 +39,13 @@ test('API_GpsFileListReqToArray', () => {
     expect(actual).toEqual(expectOutput)
 })
 
+test('API_RequestSessionID', () => {
+    const input = '{"errcode":0,"data":"{\\"acSessionId\\":\\"syGT8SOiGv0f1bOjL81aXP0arbiLWf8\\"}"}'
+    const expectOutput = 'syGT8SOiGv0f1bOjL81aXP0arbiLWf8'
+    const actual = DDPAI.API_RequestSessionID(input)
+    expect(actual).toEqual(expectOutput)
+})
+
 test.each([
     ['12345.6789', 123.761315],
     ['2345.6789', 23.761315],
