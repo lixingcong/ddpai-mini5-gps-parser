@@ -13,13 +13,6 @@ interface MergedIntervals
     index: number[] // 原数组下标
 }
 
-interface API_GPSFile
-{
-    starttime: string
-    endtime: string
-    name: string
-}
-
 interface GPSFile
 {
     from: number // 时间戳
@@ -37,7 +30,6 @@ export{
     type Interval,
     type MergedIntervals,
     type GPSFile,
-    type API_GPSFile,
     type TimeToWaypoint,
     type GpxFile
 }

@@ -50,31 +50,6 @@ function mergeIntervals(intervals:DDPAI.Interval[]) : DDPAI.MergedIntervals {
 }
 
 /**
- * 从json中提取出data字段
- *
- * @param {string} inputJson 输入值，即API_GpsFileListReq的结果
- * @return {array} 当errcode字段为0时，返回数组，每个元素是字典，键值对详见代码，否则返回Array()
- */
-function API_GpsFileListReqToArray(inputJson:string):DDPAI.GPSFile[] {
-    const j = JSON.parse(inputJson)
-    let ret:DDPAI.GPSFile[]= []
-    if (0 == j.errcode) {
-        const file = JSON.parse(j.data).file as DDPAI.API_GPSFile[]
-        const timespan = file.map(f => [parseInt(f.starttime) + FirmwareTimestampOffset, parseInt(f.endtime) + FirmwareTimestampOffset] as DDPAI.Interval)
-        const filenames = file.map(f => f.name)
-        const mergedResult = mergeIntervals(timespan)
-
-        ret = mergedResult.intervals.map(m => ({ 'from': m[0], 'to': m[1], 'filename': [] }))
-        mergedResult.index.forEach((mergedTimespanIdx, timespanIdx) => {
-            ret[mergedTimespanIdx].filename.push(filenames[timespanIdx])
-        })
-    }
-
-    ret.forEach(i => { i.filename.sort(); })
-    return ret
-}
-
-/**
  * 从json中提取出SessionId字段
  *
  * @param {string} inputJson 输入值，即API_RequestSessionID的结果
