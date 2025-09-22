@@ -1,9 +1,32 @@
 import * as WEBAPI from './types/web-api'
 import * as GPS_I from './types/gps'
 import * as GPS from './gps'
+import dayjs from "dayjs"
 
 const TimestampOffset = 28800 // 盯盯拍固件中timestamp时差（猜想是厂商的固定值？没有参数可以更改该值）
 const IMEI = '6b6014501d19a893'
+
+abstract class CookiesRequest extends WEBAPI.Astract
+{
+    readonly sessionId: string
+
+    constructor(sessionId:string)
+    {
+        super()
+        this.sessionId = sessionId
+    }
+
+    request(): WEBAPI.Request
+    {
+        return {
+            headers:{
+                'sessionid': this.sessionId,
+                'Cookie': `SessionID=${this.sessionId}`
+            },
+            body:''
+        }
+    }
+}
 
 class GpsFileListReq extends WEBAPI.Astract
 {
@@ -68,25 +91,18 @@ class RequestSessionID extends WEBAPI.Astract
     }
 }
 
-class RequestCertificate extends WEBAPI.Astract
+class RequestCertificate extends CookiesRequest
 {
-    readonly sessionId: string = ''
-
     constructor(sessionId:string)
     {
-        super()
-        this.sessionId = sessionId
+        super(sessionId)
     }
 
     request(): WEBAPI.Request
     {
-        return {
-            headers:{
-                'sessionid': this.sessionId,
-                'Cookie': `SessionID=${this.sessionId}`
-            },
-            body:`{"user":"admin","password":"admin","level":0,"uid":"${IMEI}"}`
-        }
+        const r = super.request()
+        r.body = `{"user":"admin","password":"admin","level":0,"uid":"${IMEI}"}`
+        return r
     }
 
     parseResopnse(body: string): boolean
@@ -96,4 +112,27 @@ class RequestCertificate extends WEBAPI.Astract
     }
 }
 
-export { GpsFileListReq, RequestSessionID, RequestCertificate }
+class SyncDate extends CookiesRequest
+{
+    readonly date:string
+
+    constructor(sessionId:string, timestamp: number) // ts: 秒
+    {
+        super(sessionId)
+        this.date = dayjs.unix(timestamp).format('YYYYMMDDHHmmss')
+    }
+
+    request(): WEBAPI.Request
+    {
+        const r = super.request()
+        r.body = `{"date":"${this.date}","imei":"${IMEI}","time_zone":${TimestampOffset},"format":"yyyy-MM-dd HH:mm:ss","lang":"zh_CN"}`
+        return r
+    }
+
+    parseResopnse(body: string): boolean
+    {
+        return true
+    }
+}
+
+export {IMEI, GpsFileListReq, RequestSessionID, RequestCertificate, SyncDate }
