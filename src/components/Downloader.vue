@@ -137,8 +137,8 @@ const HtmlTableFormat = 'MM-DD HH:mm'; // HTML网页中的日期格式
 const WayPointDescriptionFormat = 'YYYYMMDD HH:mm'; // 描述一个点的注释日期格式
 
 const thresholdSliderRange=[0,1000]
-const serverHostUrl = ref(import.meta.env.VITE_DDPAI_SERVER_HOST as string)
-const urlAPIGpsFileListReq = serverHostUrl.value + import.meta.env.VITE_DDPAI_APIGpsFileListReq
+const serverHostUrl = import.meta.env.VITE_DDPAI_SERVER_HOST as string;
+const urlAPIGpsFileListReq = serverHostUrl + import.meta.env.VITE_DDPAI_APIGpsFileListReq
 
 const fileFormatSelected=ref('kml')
 const fileFormatOptions = [
@@ -428,7 +428,7 @@ function useHttpFiles(){
 	selectedGpsFileIdxes.forEach(gpsFileIdx => {
 		const gpsFile = gpsFiles[gpsFileIdx]
 		gpsFile.filename.forEach(filename => {
-			const url = serverHostUrl.value + filename
+			const url = serverHostUrl + filename
 			promises.push(httpGetDecorator.request(url, false).then(
 				blob => parseGitAndGpxFromBlob(filename, blob)
 			))
