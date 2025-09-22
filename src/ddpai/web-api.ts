@@ -6,7 +6,7 @@ import dayjs from "dayjs"
 const TimestampOffset = 28800 // 盯盯拍固件中timestamp时差（猜想是厂商的固定值？没有参数可以更改该值）
 const IMEI = '6b6014501d19a893'
 
-abstract class CookiesRequest extends WEBAPI.Astract
+class CookiesRequest extends WEBAPI.Astract
 {
     readonly sessionId: string
 
@@ -25,6 +25,11 @@ abstract class CookiesRequest extends WEBAPI.Astract
             },
             body:''
         }
+    }
+
+    parseResopnse(body: string): boolean
+    {
+        return true
     }
 }
 
@@ -128,11 +133,6 @@ class SyncDate extends CookiesRequest
         r.body = `{"date":"${this.date}","imei":"${IMEI}","time_zone":${TimestampOffset},"format":"yyyy-MM-dd HH:mm:ss","lang":"zh_CN"}`
         return r
     }
-
-    parseResopnse(body: string): boolean
-    {
-        return true
-    }
 }
 
-export {IMEI, GpsFileListReq, RequestSessionID, RequestCertificate, SyncDate }
+export {IMEI, GpsFileListReq, RequestSessionID, RequestCertificate, SyncDate, CookiesRequest }
