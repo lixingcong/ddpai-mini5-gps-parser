@@ -1,11 +1,11 @@
-import * as DDPAI from '../ddpai'
+import * as GPS from '../gps'
 import * as DDPAI_T from '../types/ddpai'
 import { expect, test } from 'vitest'
 
 test('mergeIntervals', () => {
     const input = [[1, 2], [3, 5], [6, 10], [0, 1], [0, 3]]
     const expectOutput:DDPAI_T.MergedIntervals = { intervals: [[0, 5], [6, 10]], index: [0, 0, 1, 0, 0] }
-    expect(DDPAI.mergeIntervals(input as DDPAI_T.Interval[])).toEqual(expectOutput)
+    expect(GPS.mergeIntervals(input as DDPAI_T.Interval[])).toEqual(expectOutput)
 })
 
 test('API_GpsFileListReqToArray', () => {
@@ -35,14 +35,14 @@ test('API_GpsFileListReqToArray', () => {
     }]
 
 
-    const actual = DDPAI.API_GpsFileListReqToArray(input)
+    const actual = GPS.API_GpsFileListReqToArray(input)
     expect(actual).toEqual(expectOutput)
 })
 
 test('API_RequestSessionID', () => {
     const input = '{"errcode":0,"data":"{\\"acSessionId\\":\\"syGT8SOiGv0f1bOjL81aXP0arbiLWf8\\"}"}'
     const expectOutput = 'syGT8SOiGv0f1bOjL81aXP0arbiLWf8'
-    const actual = DDPAI.API_RequestSessionID(input)
+    const actual = GPS.API_RequestSessionID(input)
     expect(actual).toEqual(expectOutput)
 })
 
@@ -53,7 +53,7 @@ test.each([
     ['045.6789', 0.761315],
     ['12345.0', 123.75]
 ])('dddmmToDecimal(%s) => %s', (input, output) => {
-    expect(DDPAI.dddmmToDecimal(input)).toBe(output)
+    expect(GPS.dddmmToDecimal(input)).toBe(output)
 })
 
 test('gpxToWayPointDict', () => {
@@ -107,7 +107,7 @@ $GYRO,-0.550880,0.263787,0.778503'
             '$GPRMC,044833.000,A,4321.22812,N,12345.26001,E,5.426,190.52,150221,,,A*4B'
     ]}
 
-    const preprocessedOutput = DDPAI.preprocessRawGpxFile(testGpxFileContent, 100, '\n')
+    const preprocessedOutput = GPS.preprocessRawGpxFile(testGpxFileContent, 100, '\n')
     expect(preprocessedOutput).toEqual(expectPreprocessedOutput)
 
     const expectWaypointOutput = {
@@ -175,6 +175,6 @@ $GYRO,-0.550880,0.263787,0.778503'
           hdop: undefined
         }
       }
-    const waypointOutput = DDPAI.gpxToWayPointDict(preprocessedOutput.content)
+    const waypointOutput = GPS.gpxToWayPointDict(preprocessedOutput.content)
     expect(waypointOutput).toEqual(expectWaypointOutput)
 })
