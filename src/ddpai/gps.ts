@@ -1,5 +1,5 @@
 import * as WP from './waypoint'
-import * as DDPAI from './types/ddpai'
+import * as GPS_I from './types/gps'
 import type { WayPointIntf } from './types/waypoint'
 
 const FirmwareTimestampOffset = -28800 // 盯盯拍固件中timestamp时差（猜想是厂商的固定值？没有参数可以更改该值）
@@ -13,10 +13,10 @@ const LatLonDecimal = 6 // 经纬度的小数位数，6位足够了。按照1纬
  * @return {dict} 返回合并好的数组加索引，如上述输出为{'merged':[[0,5], [6,10]], 'index':[0,0,1,0]}
  *                                                  合并后的时间跨度                   输入值属于合并后的跨度下标
  */
-function mergeIntervals(intervals:DDPAI.Interval[]) : DDPAI.MergedIntervals {
+function mergeIntervals(intervals:GPS_I.Interval[]) : GPS_I.MergedIntervals {
     const intervalsSorted = intervals.slice().sort((a, b) => { return a[0] - b[0]; })
     // console.log(intervalsSorted)
-    let merged:DDPAI.Interval[] = []
+    let merged:GPS_I.Interval[] = []
     intervalsSorted.forEach(t => {
         const L = merged.length
         const t0 = t[0]
@@ -86,8 +86,8 @@ function dddmmToDecimal(dddmm:string):number {
  * @param {array} gpxFileContents gpx文件内容数组，每个元素为整行纯文本（已经筛选好并按照时间顺序的内容）
  * @return {array} 字典，timestamp => Waypoint对象
  */
-function gpxToWayPointDict(gpxFileContents:string[]):DDPAI.TimeToWaypoint {
-    let ret:DDPAI.TimeToWaypoint = {}
+function gpxToWayPointDict(gpxFileContents:string[]):GPS_I.TimeToWaypoint {
+    let ret:GPS_I.TimeToWaypoint = {}
     const comma = ','
     let timestamp = 0; // 作为ret字典的键
     const dateObj = new Date()
@@ -231,11 +231,11 @@ function gpxToWayPointDict(gpxFileContents:string[]):DDPAI.TimeToWaypoint {
  * @param {number} maxLineCount 为了提高效率，指定读取的最大行数
  * @return {object} 字典{'startTime':12345, 'content':['$GPRMC,xxxx','$GPGGA,yyyy']}
  */
-function preprocessRawGpxFile(gpxFileContent:string, maxLineCount:number, newline:string):DDPAI.GpxFile{
+function preprocessRawGpxFile(gpxFileContent:string, maxLineCount:number, newline:string):GPS_I.GpxFile{
     const lines = gpxFileContent.split(newline)
     const lineCount = Math.min(maxLineCount, lines.length)
 
-    let ret:DDPAI.GpxFile = {startTime:0, content:[]}
+    let ret:GPS_I.GpxFile = {startTime:0, content:[]}
     if(lineCount >= 1){
         const firstLine = lines[0]
         if(firstLine.startsWith('$GPSCAMTIME')){
@@ -265,8 +265,7 @@ function preprocessRawGpxFile(gpxFileContent:string, maxLineCount:number, newlin
 
 export {
     mergeIntervals,
-    API_GpsFileListReqToArray,
-    API_RequestSessionID,
+    // API_RequestSessionID,
     gpxToWayPointDict,
     preprocessRawGpxFile,
     dddmmToDecimal

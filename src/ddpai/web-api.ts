@@ -1,11 +1,10 @@
 import * as WEBAPI from './types/web-api'
-import * as DDPAI from './types/ddpai'
-
+import * as GPS_I from './types/gps'
 import * as GPS from './gps'
 
 class GpsFileListReq extends WEBAPI.Astract
 {
-    files:DDPAI.GPSFile[] = []
+    files:GPS_I.GPSFile[] = []
     timestampOffset = -28800 // 盯盯拍固件中timestamp时差（猜想是厂商的固定值？没有参数可以更改该值）
 
     request(): WEBAPI.Request
@@ -26,7 +25,7 @@ class GpsFileListReq extends WEBAPI.Astract
             }
 
             const file = JSON.parse(j.data).file as GPSFile[]
-            const timespan = file.map(f => [parseInt(f.starttime) + this.timestampOffset, parseInt(f.endtime) + this.timestampOffset] as DDPAI.Interval)
+            const timespan = file.map(f => [parseInt(f.starttime) + this.timestampOffset, parseInt(f.endtime) + this.timestampOffset] as GPS_I.Interval)
             const filenames = file.map(f => f.name)
             const mergedResult = GPS.mergeIntervals(timespan)
 

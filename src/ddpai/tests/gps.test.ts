@@ -1,18 +1,11 @@
 import * as GPS from '../gps'
-import * as DDPAI_T from '../types/ddpai'
+import * as GPS_I from '../types/gps'
 import { expect, test } from 'vitest'
 
 test('mergeIntervals', () => {
     const input = [[1, 2], [3, 5], [6, 10], [0, 1], [0, 3]]
-    const expectOutput:DDPAI_T.MergedIntervals = { intervals: [[0, 5], [6, 10]], index: [0, 0, 1, 0, 0] }
-    expect(GPS.mergeIntervals(input as DDPAI_T.Interval[])).toEqual(expectOutput)
-})
-
-test('API_RequestSessionID', () => {
-    const input = '{"errcode":0,"data":"{\\"acSessionId\\":\\"syGT8SOiGv0f1bOjL81aXP0arbiLWf8\\"}"}'
-    const expectOutput = 'syGT8SOiGv0f1bOjL81aXP0arbiLWf8'
-    const actual = GPS.API_RequestSessionID(input)
-    expect(actual).toEqual(expectOutput)
+    const expectOutput:GPS_I.MergedIntervals = { intervals: [[0, 5], [6, 10]], index: [0, 0, 1, 0, 0] }
+    expect(GPS.mergeIntervals(input as GPS_I.Interval[])).toEqual(expectOutput)
 })
 
 test.each([

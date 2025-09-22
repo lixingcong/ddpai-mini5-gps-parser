@@ -102,8 +102,9 @@ import * as DF from '@/ddpai/date-format'
 import * as TRACK from '@/ddpai/track'
 import * as WP from '@/ddpai/waypoint'
 import { type WayPointIntf } from "@/ddpai/types/waypoint"
-import * as DDPAI from '@/ddpai/ddpai'
-import * as DDPAI_I from '@/ddpai/types/ddpai'
+import * as WEBAPI from '@/ddpai/web-api'
+import * as GPS from '@/ddpai/gps'
+import * as GPS_I from '@/ddpai/types/gps'
 import * as RD from '@/RequestDecorator'
 import ProgressBar from './ProgressBar.vue'
 import TrackPreview from './TrackPreview.vue'
@@ -130,7 +131,7 @@ const gpsFileGroups:GPSFileGroup[] = reactive([])
 let selectedGpsFileIdxes:number[] = [] // 待下载gpx/git文件的数组索引，对应gpsFiles数组下标
 let gpxPreprocessContents:{ [key: string]: string[] } = {} // 字典，为json中的startTime到gpx原文件内容的映射（只保留GPGGA和GPRMC行）
 let timestampToWayPoints:{[key: number]: WayPointIntf} = {} // 字典，为timestamp到WayPoint对象的映射
-const gpsFiles:DDPAI_I.GPSFile[] = reactive([]) // 数组，HTTP链接，每个gpx/git的直链
+const gpsFiles:GPS_I.GPSFile[] = reactive([]) // 数组，HTTP链接，每个gpx/git的直链
 
 const HtmlTableFormat = 'MM-DD HH:mm'; // HTML网页中的日期格式
 const WayPointDescriptionFormat = 'YYYYMMDD HH:mm'; // 描述一个点的注释日期格式
@@ -189,8 +190,9 @@ async function getFromHttpServer(){
 	await nextTick()
 
 	promiseHttpGetAjax(urlAPIGpsFileListReq, true).then(response => {
-		const newGpsFileListReq = DDPAI.API_GpsFileListReqToArray(response as string)
-		Object.assign(gpsFiles, newGpsFileListReq)
+		const api = new WEBAPI.GpsFileListReq()
+		api.parseResopnse(response as string)
+		Object.assign(gpsFiles, api.files)
 
 		if (gpsFiles.length > 0) {
 			const groupGpsFileListReq = () => {
@@ -488,7 +490,7 @@ function mergePreprocessed(){
 	gpxPreprocessTimestamps.sort()
 	let concated:string[] = []
 	gpxPreprocessTimestamps.forEach(ts => { concated = concated.concat(gpxPreprocessContents[ts]); })
-	timestampToWayPoints = DDPAI.gpxToWayPointDict(concated)
+	timestampToWayPoints = GPS.gpxToWayPointDict(concated)
 	gpxPreprocessContents = {}; // clean up
 }
 
@@ -532,7 +534,7 @@ function promiseReadGpx(filename:string, blob:Blob) {
         if(!textData)
             return Promise.reject('read gpx with null')
 
-		const p = DDPAI.preprocessRawGpxFile(textData as string, 160, '\n')
+		const p = GPS.preprocessRawGpxFile(textData as string, 160, '\n')
 		if(!UTILS.isObjectEmpty(p))
 			gpxPreprocessContents[p.startTime] = p.content
 		refreshDownloadProgress()

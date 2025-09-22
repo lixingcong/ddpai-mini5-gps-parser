@@ -54,7 +54,7 @@
 <script setup lang="ts" name="GPSFileTable">
 import { computed, reactive, toRefs, watch } from 'vue'
 import { type GPSFileGroup } from '@/types/GPSFileTable'
-import * as DDPAI_I from '@/ddpai/types/ddpai'
+import * as GPS from '@/ddpai/types/gps'
 import HelpTip from './HelpTip.vue'
 import * as DF from '@/ddpai/date-format'
 import * as UTILS from '@/ddpai/utils'
@@ -62,7 +62,7 @@ import useClipboard from 'vue-clipboard3'
 
 const props = defineProps<{
     groups:GPSFileGroup[],
-    gpsFiles: DDPAI_I.GPSFile[],
+    gpsFiles: GPS.GPSFile[],
     serverHostUrl: string
 }>()
 
