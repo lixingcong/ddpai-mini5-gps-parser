@@ -52,6 +52,12 @@ function promiseHttpPost(url:string, request:Request) {
 
 
 const syncTime = () => {
+    const hourString = prompt('将记录仪的时钟，调快多少小时？', '0')
+    if(!hourString || hourString.length <= 0)
+        return
+
+    const timestampOffset = parseInt(hourString)*3600
+
     const apiRequestSessionID = new WEBAPI.RequestSessionID()
 
     promiseHttpPost(urlAPIRequestSessionID, apiRequestSessionID.request()).then(
@@ -69,8 +75,8 @@ const syncTime = () => {
                         return Promise.reject(new Error('Parse RequestCertificate failed'))
 
                     // console.log('RequestCertificate done')
-                    const ts = Math.round((new Date()).getTime() / 1000)
-                    const apiSyncDate = new WEBAPI.SyncDate(sessionId, ts)
+                    const now = Math.round((new Date()).getTime() / 1000)
+                    const apiSyncDate = new WEBAPI.SyncDate(sessionId, now + timestampOffset)
 
                     return promiseHttpPost(urlAPISyncDate, apiSyncDate.request()).then(
                         (resolved) => {
