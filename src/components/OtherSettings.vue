@@ -15,13 +15,13 @@ const serverHostUrl = import.meta.env.VITE_DDPAI_SERVER_HOST as string;
 const urlAPIRequestSessionID = serverHostUrl + import.meta.env.VITE_DDPAI_APIRequestSessionID
 const urlAPIRequestCertificate = serverHostUrl + import.meta.env.VITE_DDPAI_APIRequestCertificate
 const urlAPISyncDate = serverHostUrl + import.meta.env.VITE_DDPAI_APISyncDate
-
+const urlAPILogout = serverHostUrl + import.meta.env.VITE_DDPAI_API_Logout
 
 type HttpPostResolve = (content:string) => void
 type HttpPostReject = (content:Error) => void
 
 function promiseHttpPost(url:string, request:Request) {
-	return new Promise(function (resolve:HttpPostResolve, reject:HttpPostReject) {
+	return new Promise((resolve:HttpPostResolve, reject:HttpPostReject) => {
 		let xhr = new XMLHttpRequest()
 		xhr.responseType = 'text'
 		xhr.timeout = 2000
@@ -37,8 +37,9 @@ function promiseHttpPost(url:string, request:Request) {
 			if (this.readyState === 4) {
 				if (this.status === 200){
 					resolve(this.response as string)
-				}else
-					reject(new Error('(' + xhr.status + ') ' + url))
+				}else{
+                    reject(new Error('(' + xhr.status + ') ' + url))
+                }
 			}
 		}
 
@@ -46,7 +47,6 @@ function promiseHttpPost(url:string, request:Request) {
 		    xhr.send(request.body)
         else
             xhr.send()
-
 	})
 }
 
@@ -57,34 +57,33 @@ const syncTime = () => {
     promiseHttpPost(urlAPIRequestSessionID, apiRequestSessionID.request()).then(
         (resolved) => {
             if(!apiRequestSessionID.parseResopnse(resolved))
-                return Promise.reject('RequestSessionID failed')
+                return Promise.reject('Parse RequestSessionID failed')
 
             const sessionId = apiRequestSessionID.sessionId
-            console.log('RequestSessionID ok, value=', sessionId)
+            // console.log('RequestSessionID ok, value=', sessionId)
             const apiRequestCertificate = new WEBAPI.RequestCertificate(sessionId)
 
             return promiseHttpPost(urlAPIRequestCertificate, apiRequestCertificate.request()).then(
                 (resolved) => {
                     if(!apiRequestCertificate.parseResopnse(resolved))
-                        return Promise.reject('RequestCertificate failed')
+                        return Promise.reject(new Error('Parse RequestCertificate failed'))
 
-                    console.log('RequestCertificate done')
-
+                    // console.log('RequestCertificate done')
                     const ts = Math.round((new Date()).getTime() / 1000)
                     const apiSyncDate = new WEBAPI.SyncDate(sessionId, ts)
 
                     return promiseHttpPost(urlAPISyncDate, apiSyncDate.request()).then(
                         (resolved) => {
-                            console.log('SyncDate done')
+                            // console.log('SyncDate done')
+
+                            const apiLogout = new WEBAPI.CookiesRequest(sessionId)
+                            return promiseHttpPost(urlAPILogout, apiLogout.request())
                         },
-                        (rejected) => onError
                     )
                 },
-                (rejected) => onError
             )
-        },
-        (rejected) => onError
-    )
+        }
+    ).catch(onError)
 }
 
 const onError = (s:Error) => {alert(s)}
