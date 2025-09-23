@@ -21,7 +21,7 @@ class CookiesRequest extends WEBAPI.Astract
         return {
             headers:{
                 'sessionid': this.sessionId,
-                'Cookie': `SessionID=${this.sessionId}`
+                // 'Cookie': `SessionID=${this.sessionId}`
             },
             body:''
         }
