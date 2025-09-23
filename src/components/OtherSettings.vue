@@ -54,7 +54,7 @@ function promiseHttpPost(url:string, request:Request, withCredentials:boolean) {
 const syncTime = () => {
     const apiRequestSessionID = new WEBAPI.RequestSessionID()
 
-    promiseHttpPost(urlAPIRequestSessionID, apiRequestSessionID.request(), false).then(
+    promiseHttpPost(urlAPIRequestSessionID, apiRequestSessionID.request(), true).then(
         (resolved) => {
             if(!apiRequestSessionID.parseResopnse(resolved))
                 return Promise.reject('RequestSessionID failed')
