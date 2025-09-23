@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 
-import { Request } from '@/ddpai/types/web-api';
+import { type Request } from '@/ddpai/types/web-api';
 import * as WEBAPI from '@/ddpai/web-api'
 
 const serverHostUrl = import.meta.env.VITE_DDPAI_SERVER_HOST as string;

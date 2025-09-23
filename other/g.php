@@ -19,10 +19,10 @@ switch($queryArray['cmd']){
         echo(file_get_contents('g.json', 'r'));
         break;
     case 'API_RequestSessionID':
-        $ck = randomString(10);
-        $data = ['acSessionId' => $ck];
+        $sessionId = randomString(10);
+        $data = ['acSessionId' => $sessionId];
         $response = ['errcode'=>0, 'data'=> json_encode($data)];
-        setcookie("sessionId", $ck);
+        setcookie("SessionID", $sessionId);
         echo(json_encode($response));
         break;
     case 'API_RequestCertificate':
