@@ -19,12 +19,15 @@ switch($queryArray['cmd']){
         echo(file_get_contents('g.json', 'r'));
         break;
     case 'API_RequestSessionID':
-        $data = ['acSessionId' => randomString(10)];
+        $ck = randomString(10);
+        $data = ['acSessionId' => $ck];
         $response = ['errcode'=>0, 'data'=> json_encode($data)];
+        setcookie("sessionId", $ck);
         echo(json_encode($response));
         break;
     case 'API_RequestCertificate':
     case 'API_SyncDate':
+    case 'API_Logout':
         $response = ['errcode'=>0];
         echo(json_encode($response));
         break;
