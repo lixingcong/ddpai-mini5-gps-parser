@@ -15,7 +15,7 @@ GPS轨迹原始数据源，可以是从记录仪中直接获取，也可以打�
 
 ### 从记录仪中获取轨迹文件
 
-- PC端Chrome浏览器（Android端可用Firefox或者Yandex）安装允许跨站请求的CORS扩展。在扩展应用商店中搜索CORS，条目有很多，如[Allow CORS](https://mybrowseraddon.com/access-control-allow-origin.html)或者[CORS Everywhere](https://github.com/spenibus/cors-everywhere-firefox-addon)
+- PC端Chrome浏览器（Android端可用Firefox或者Yandex）安装允许跨站请求的CORS扩展。在扩展应用商店中搜索CORS，条目有很多，如[Allow CORS](https://mybrowseraddon.com/access-control-allow-origin.html)或者[CORS Everywhere](https://github.com/x1dse/cors-everywhere-firefox-addon)
 - 启用CORS扩展中的```Access-Control-Allow-Headers, Access-Control-Allow-Credentials, Access-Control-Allow-Origin:*```标志，用于篡改服务器repsonse头部
 - 打开网页（因为下一步连接WiFi后就没网了）
 - 连接记录仪WiFi
@@ -27,7 +27,8 @@ GPS轨迹原始数据源，可以是从记录仪中直接获取，也可以打�
 
 - 安装CORS扩展
 - 部署的网站访问使用http协议，而不是https，因为盯盯拍记录仪监听端口http
-- Firefox用户，使用Beta版而不是Stable（打不开config页面），并在`about:config`中设置`dom.security.http_first_pbm = false`，避免强制跳转到https
+- Firefox用户，使用Beta版而不是Stable（打不开config页面），并在`about:config`中设置`dom.security.http_first_pbm = false`，避免强制跳转到https。
+- Firefox移动版，可以在"关于Firefox"中点击5次火狐图标，开启开发者模式，并安装本地xpi插件（CORS）。注意关闭xpi的签名检查（在`about:config`中设置`xpinstall.signatures.required`为false）
 
 ### 使用本地文件
 
