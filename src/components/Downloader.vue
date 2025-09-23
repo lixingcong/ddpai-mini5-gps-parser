@@ -428,7 +428,7 @@ function useHttpFiles(){
 	selectedGpsFileIdxes.forEach(gpsFileIdx => {
 		const gpsFile = gpsFiles[gpsFileIdx]
 		gpsFile.filename.forEach(filename => {
-			const url = serverHostUrl + filename
+			const url = `${serverHostUrl}/${filename}`
 			promises.push(httpGetDecorator.request(url, false).then(
 				blob => parseGitAndGpxFromBlob(filename, blob)
 			))
