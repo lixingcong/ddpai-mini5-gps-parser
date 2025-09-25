@@ -189,9 +189,9 @@ async function getFromHttpServer(){
 	gpsFileGroups.length = 0
 	await nextTick()
 
-	promiseHttpGetAjax(urlAPIGpsFileListReq, true).then(response => {
+	promiseHttpGetAsText(urlAPIGpsFileListReq).then(response => {
 		const api = new WEBAPI.GpsFileListReq()
-		api.parseResopnse(response as string)
+		api.parseResopnse(response)
 		Object.assign(gpsFiles, api.files)
 
 		if (gpsFiles.length > 0) {
@@ -423,13 +423,13 @@ function useHttpFiles(){
 	fileProgress.value = -1
 
 	let promises:PromiseLike<any>[] = []
-	const httpGetDecorator = new RD.RequestDecorator(4, promiseHttpGetAjax)
+	const httpGetDecorator = new RD.RequestDecorator(4, promiseHttpGetAsBlob)
 
 	selectedGpsFileIdxes.forEach(gpsFileIdx => {
 		const gpsFile = gpsFiles[gpsFileIdx]
 		gpsFile.filename.forEach(filename => {
 			const url = `${serverHostUrl}/${filename}`
-			promises.push(httpGetDecorator.request(url, false).then(
+			promises.push(httpGetDecorator.request(url).then(
 				blob => parseGitAndGpxFromBlob(filename, blob)
 			))
 		})
@@ -587,27 +587,19 @@ const promiseReadGit = async (filename:string, blob:Blob) => {
 	return Promise.reject(new Error('Can not open archive: ' + filename))
 }
 
-type HttpGetAjaxResolve = (content:string|Blob) => void
-function promiseHttpGetAjax(url:string, isText:boolean) {
-	return new Promise(function (resolve:HttpGetAjaxResolve, reject) {
-		let xhr = new XMLHttpRequest()
-		xhr.responseType = isText ? 'text' : 'blob'
-		xhr.timeout = 2000
-		xhr.open('GET', url, true)
-		xhr.send()
-		xhr.onreadystatechange = function () {
-			if (this.readyState === 4) {
-				if (this.status === 200){
-					if(isText)
-						resolve(this.response as string)
-					else
-						resolve(this.response as Blob)
-				}else
-					reject(new Error('(' + xhr.status + ') ' + url))
-			}
-		}
+const promiseHttpGet = (url:string, isText: boolean) => {
+	return fetch(url, {
+		method: 'GET',
+		mode: 'cors'
+	}).then(r => {
+		if(!r.ok)
+			return Promise.reject(new Error(`Fetch ${url} returns ${r.status}`))
+		return Promise.resolve(isText ? r.text() : r.blob())
 	})
 }
+
+const promiseHttpGetAsText = (url:string) => promiseHttpGet(url, true) as Promise<string>
+const promiseHttpGetAsBlob = (url:string) => promiseHttpGet(url, false) as Promise<Blob>
 
 const parseGitAndGpxFromBlob = (filename:string, blob:Blob) => {
 	if (filename.endsWith('git'))
