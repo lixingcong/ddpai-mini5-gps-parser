@@ -29,7 +29,7 @@ function promiseHttpPost(url:string, request:Request) {
 }
 
 const syncTime = () => {
-    const hourString = prompt('将记录仪的时钟，调快多少小时？', '0')
+    const hourString = prompt('基于浏览器当前的时间，将记录仪的时钟再调快多少小时？', '0')
     if(!hourString || hourString.length <= 0)
         return
 
