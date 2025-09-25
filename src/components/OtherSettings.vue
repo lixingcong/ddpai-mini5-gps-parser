@@ -33,15 +33,17 @@ function promiseHttpPost(url:string, request:Request) {
 
         xhr.withCredentials = true // 跨域
 
-		xhr.onreadystatechange = function () {
-			if (this.readyState === 4) {
-				if (this.status === 200){
-					resolve(this.response as string)
-				}else{
-                    reject(new Error('(' + xhr.status + ') ' + url))
-                }
-			}
+		xhr.onload = function () {
+            if (this.status === 200){
+                resolve(this.response as string)
+            }else{
+                reject(new Error(`${url} response code ${xhr.status}`))
+            }
 		}
+
+        xhr.onerror = function() {
+            reject(new Error(`${url}`))
+        }
 
         if(request.body.length > 0)
 		    xhr.send(request.body)
