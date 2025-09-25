@@ -588,9 +588,13 @@ const promiseReadGit = async (filename:string, blob:Blob) => {
 }
 
 const promiseHttpGet = (url:string, isText: boolean) => {
+	const controller = new AbortController() // 超时控制
+	setTimeout(() => {controller.abort()}, 2000)
+
 	return fetch(url, {
 		method: 'GET',
-		mode: 'cors'
+		mode: 'cors',
+		signal: controller.signal,
 	}).then(r => {
 		if(!r.ok)
 			return Promise.reject(new Error(`Fetch ${url} returns ${r.status}`))

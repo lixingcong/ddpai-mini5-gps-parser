@@ -19,12 +19,16 @@ const urlAPILogout = serverHostUrl + import.meta.env.VITE_DDPAI_API_Logout
 
 function promiseHttpPost(url:string, request:Request) {
     const body = request.body.length > 0 ? request.body: null
+    const controller = new AbortController() // 超时控制
+	setTimeout(() => {controller.abort()}, 2000)
+
     return fetch(url, {
         method: 'POST',
         mode: 'cors',
         credentials: 'include', // 跨域
         headers: request.headers,
-        body: body
+        body: body,
+        signal: controller.signal
     }).then(r => r.text())
 }
 
