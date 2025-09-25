@@ -17,41 +17,16 @@ const urlAPIRequestCertificate = serverHostUrl + import.meta.env.VITE_DDPAI_APIR
 const urlAPISyncDate = serverHostUrl + import.meta.env.VITE_DDPAI_APISyncDate
 const urlAPILogout = serverHostUrl + import.meta.env.VITE_DDPAI_API_Logout
 
-type HttpPostResolve = (content:string) => void
-type HttpPostReject = (content:Error) => void
-
 function promiseHttpPost(url:string, request:Request) {
-	return new Promise((resolve:HttpPostResolve, reject:HttpPostReject) => {
-		let xhr = new XMLHttpRequest()
-		xhr.responseType = 'text'
-		xhr.timeout = 2000
-
-        xhr.open('POST', url, true)
-
-        for (const [key, value] of Object.entries(request.headers))
-            xhr.setRequestHeader(key, value)
-
-        xhr.withCredentials = true // 跨域
-
-		xhr.onload = function () {
-            if (this.status === 200){
-                resolve(this.response as string)
-            }else{
-                reject(new Error(`${url} response code ${xhr.status}`))
-            }
-		}
-
-        xhr.onerror = function() {
-            reject(new Error(`${url}`))
-        }
-
-        if(request.body.length > 0)
-		    xhr.send(request.body)
-        else
-            xhr.send()
-	})
+    const body = request.body.length > 0 ? request.body: null
+    return fetch(url, {
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'include', // 跨域
+        headers: request.headers,
+        body: body
+    }).then(r => r.text())
 }
-
 
 const syncTime = () => {
     const hourString = prompt('将记录仪的时钟，调快多少小时？', '0')
