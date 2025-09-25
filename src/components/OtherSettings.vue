@@ -3,19 +3,26 @@
         <span class="btn-spacer">
             <button @click="syncTime">同步时间</button>
         </span>
+        <span class="btn-spacer">
+            <button @click="errorList.length=0">清空错误显示</button>
+        </span>
     </div>
+    <div v-for="(e,idx) in errorList" class="error">{{ idx+1 }}: {{ e }}</div>
 </template>
 
 <script setup lang="ts">
 
 import { type Request } from '@/ddpai/types/web-api';
 import * as WEBAPI from '@/ddpai/web-api'
+import { reactive } from 'vue';
 
 const serverHostUrl = import.meta.env.VITE_DDPAI_SERVER_HOST as string;
 const urlAPIRequestSessionID = serverHostUrl + import.meta.env.VITE_DDPAI_APIRequestSessionID
 const urlAPIRequestCertificate = serverHostUrl + import.meta.env.VITE_DDPAI_APIRequestCertificate
 const urlAPISyncDate = serverHostUrl + import.meta.env.VITE_DDPAI_APISyncDate
 const urlAPILogout = serverHostUrl + import.meta.env.VITE_DDPAI_API_Logout
+
+const errorList:string[] = reactive([])
 
 function promiseHttpPost(url:string, request:Request) {
     const body = request.body.length > 0 ? request.body: null
@@ -44,7 +51,7 @@ const syncTime = () => {
     promiseHttpPost(urlAPIRequestSessionID, apiRequestSessionID.request()).then(
         (resolved) => {
             if(!apiRequestSessionID.parseResopnse(resolved))
-                return Promise.reject('Parse RequestSessionID failed')
+                return Promise.reject(new Error('Parse RequestSessionID failed'))
 
             const sessionId = apiRequestSessionID.sessionId
             // console.log('RequestSessionID ok, value=', sessionId)
@@ -73,7 +80,7 @@ const syncTime = () => {
     ).catch(onError)
 }
 
-const onError = (s:Error) => {alert(s)}
+const onError = (s: Error) => { errorList.push(s.message) }
 
 </script>
 
